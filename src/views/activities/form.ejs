@@ -1,0 +1,1026 @@
+
+<%- include("../partials/head", { title: title || "Record Activity | Gyansify" }) %>
+
+<style>
+  :root {
+    --form-bg: #f5f7fb;
+    --form-card: #ffffff;
+    --form-text: #182338;
+    --form-muted: #718096;
+    --form-border: #e5eaf2;
+    --form-primary: #4f46e5;
+    --form-primary-dark: #4338ca;
+    --form-green: #059669;
+    --form-radius: 18px;
+  }
+
+  body {
+    background: var(--form-bg);
+  }
+
+  .activity-form-page,
+  .activity-form-page * {
+    box-sizing: border-box;
+  }
+
+  .activity-form-page {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    padding: 30px 26px 42px;
+    color: var(--form-text);
+  }
+
+  .activity-form-page a {
+    text-decoration: none;
+  }
+
+  .activity-form-page .muted {
+    color: var(--form-muted);
+    line-height: 1.7;
+  }
+
+  .activity-form-page .eyebrow {
+    margin: 0 0 9px;
+    color: var(--form-primary);
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 1.7px;
+  }
+
+  .activity-form-page .page-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .activity-form-page h1 {
+    margin: 0;
+    font-size: clamp(27px, 3vw, 36px);
+    font-weight: 850;
+    letter-spacing: -1.2px;
+    line-height: 1.2;
+  }
+
+  .activity-form-page .page-description {
+    max-width: 610px;
+    margin: 10px 0 0;
+    font-size: 13px;
+  }
+
+  .activity-form-page .btn {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+    transition: background .18s ease, transform .18s ease;
+  }
+
+  .activity-form-page .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .activity-form-page .btn-primary {
+    color: #fff;
+    background: var(--form-primary);
+    box-shadow: 0 5px 14px rgb(79 70 229 / 17%);
+  }
+
+  .activity-form-page .btn-primary:hover:not(:disabled) {
+    background: var(--form-primary-dark);
+  }
+
+  .activity-form-page .btn-light {
+    color: #374151;
+    background: #fff;
+    border-color: var(--form-border);
+  }
+
+  .activity-form-page .btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .activity-form-page .form-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 285px;
+    align-items: start;
+    gap: 20px;
+  }
+
+  .activity-form-page .panel {
+    overflow: hidden;
+    border: 1px solid var(--form-border);
+    border-radius: var(--form-radius);
+    background: var(--form-card);
+    box-shadow: 0 5px 22px rgb(15 23 42 / 3%);
+  }
+
+  .activity-form-page .panel-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 21px 23px;
+    border-bottom: 1px solid var(--form-border);
+  }
+
+  .activity-form-page .section-icon {
+    display: grid;
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--form-primary);
+    background: #eef2ff;
+    font-size: 18px;
+  }
+
+  .activity-form-page .panel-heading h2 {
+    margin: 1px 0 5px;
+    font-size: 15px;
+    font-weight: 850;
+  }
+
+  .activity-form-page .panel-heading p {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  .activity-form-page .form-content {
+    padding: 24px;
+  }
+
+  .activity-form-page .form-stack {
+    display: grid;
+    gap: 21px;
+  }
+
+  .activity-form-page .field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .activity-form-page .field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #303b4e;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .activity-form-page .required-mark {
+    color: #dc2626;
+  }
+
+  .activity-form-page .optional {
+    color: #98a2b3;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .activity-form-page .control {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 45px;
+    padding: 11px 13px;
+    outline: none;
+    border: 1px solid #dfe5ee;
+    border-radius: 10px;
+    color: #263247;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .activity-form-page .control:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
+  }
+
+  .activity-form-page .control:disabled {
+    color: #98a2b3;
+    background: #f8fafc;
+    cursor: not-allowed;
+  }
+
+  .activity-form-page textarea.control {
+    min-height: 105px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .field-help {
+    margin: 0;
+    color: #8792a5;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .field-error {
+    display: none;
+    margin: 0;
+    color: #b91c1c;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .activity-form-page .field.has-error .control {
+    border-color: #f87171;
+    background: #fffafa;
+  }
+
+  .activity-form-page .field.has-error .field-error {
+    display: block;
+  }
+
+  .activity-form-page .two-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px;
+  }
+
+  .activity-form-page .points-input-wrap {
+    position: relative;
+  }
+
+  .activity-form-page .points-input-wrap .control {
+    padding-right: 65px;
+  }
+
+  .activity-form-page .input-suffix {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    color: #7c8799;
+    font-size: 10px;
+    font-weight: 800;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .activity-form-page .scoring-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 14px;
+    border: 1px solid #e0e7ff;
+    border-radius: 11px;
+    color: #59667c;
+    background: #f5f7ff;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .scoring-tip strong {
+    color: #374151;
+  }
+
+  .activity-form-page .char-count {
+    color: #98a2b3;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .activity-form-page .form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 3px;
+    padding-top: 21px;
+    border-top: 1px solid #edf0f5;
+  }
+
+  .activity-form-page .action-right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+  }
+
+  .activity-form-page .side-column {
+    display: grid;
+    gap: 16px;
+  }
+
+  .activity-form-page .side-panel {
+    padding: 20px;
+  }
+
+  .activity-form-page .side-panel h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 850;
+  }
+
+  .activity-form-page .side-panel-description {
+    margin: 7px 0 17px;
+    color: var(--form-muted);
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .review-list {
+    display: grid;
+    gap: 15px;
+  }
+
+  .activity-form-page .review-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .activity-form-page .review-icon {
+    display: grid;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 10px;
+    color: #4f46e5;
+    background: #eef2ff;
+    font-size: 14px;
+  }
+
+  .activity-form-page .review-label {
+    margin: 1px 0 5px;
+    color: #8b95a7;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+
+  .activity-form-page .review-value {
+    color: #263247;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .activity-form-page .review-points {
+    color: var(--form-green);
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+  .activity-form-page .review-divider {
+    height: 1px;
+    background: #edf0f5;
+  }
+
+  .activity-form-page .workflow-list {
+    display: grid;
+    gap: 16px;
+  }
+
+  .activity-form-page .workflow-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .activity-form-page .workflow-number {
+    display: grid;
+    flex: 0 0 25px;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+    border-radius: 8px;
+    color: #4f46e5;
+    background: #eef2ff;
+    font-size: 10px;
+    font-weight: 850;
+  }
+
+  .activity-form-page .workflow-item strong {
+    display: block;
+    margin: 2px 0 4px;
+    color: #344054;
+    font-size: 11px;
+  }
+
+  .activity-form-page .workflow-item p {
+    margin: 0;
+    color: #8792a5;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .alert {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .activity-form-page .alert p {
+    margin: 0;
+  }
+
+  .activity-form-page .alert p + p {
+    margin-top: 5px;
+  }
+
+  .activity-form-page .alert-error {
+    border-color: #fecaca;
+    color: #991b1b;
+    background: #fef2f2;
+  }
+
+  .activity-form-page .alert-info {
+    border-color: #bfdbfe;
+    color: #1e40af;
+    background: #eff6ff;
+  }
+
+  .activity-form-page .alert-success {
+    border-color: #a7f3d0;
+    color: #065f46;
+    background: #ecfdf5;
+  }
+
+  .activity-form-page .alert a {
+    color: inherit;
+    font-weight: 850;
+    text-decoration: underline;
+  }
+
+  .activity-form-page .footer-note {
+    margin-top: 19px;
+    color: #8792a5;
+    font-size: 10px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 900px) {
+    .activity-form-page .form-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .activity-form-page .side-column {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .activity-form-page {
+      padding: 20px 12px 30px;
+    }
+
+    .activity-form-page .page-heading {
+      flex-direction: column;
+    }
+
+    .activity-form-page .page-heading > .btn {
+      width: 100%;
+    }
+
+    .activity-form-page .form-content {
+      padding: 18px 15px;
+    }
+
+    .activity-form-page .panel-heading {
+      padding: 17px 15px;
+    }
+
+    .activity-form-page .two-column {
+      grid-template-columns: 1fr;
+    }
+
+    .activity-form-page .side-column {
+      grid-template-columns: 1fr;
+    }
+
+    .activity-form-page .form-actions {
+      align-items: stretch;
+      flex-direction: column-reverse;
+    }
+
+    .activity-form-page .action-right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .activity-form-page .form-actions > .muted {
+      text-align: center;
+    }
+
+    .activity-form-page .action-right .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<%- include("../partials/nav") %>
+
+<%
+  const formErrors = Array.isArray(errors) ? errors : [];
+  const availableAgents = Array.isArray(agents) ? agents : [];
+  const formActivity = activity || {};
+  const selectedAgentId = String(formActivity.agentId || formActivity.agent || "");
+  const selectedType = String(formActivity.type || "qualified_lead");
+  const rawPoints = formActivity.points === undefined ? 10 : formActivity.points;
+  const allowedTypes = [
+    { v: "call", t: "Call made" },
+    { v: "qualified_lead", t: "Qualified lead" },
+    { v: "meeting", t: "Meeting booked / held" },
+    { v: "conversion", t: "Conversion / sale" },
+    { v: "other", t: "Other verified activity" }
+  ];
+  const selectedAgent = availableAgents.find(agent =>
+    String(agent._id) === selectedAgentId
+  );
+  const activityDate = formActivity.occurredAt
+    ? new Date(formActivity.occurredAt)
+    : new Date();
+  const dateIsValid = !Number.isNaN(activityDate.getTime());
+  const dateLocalValue = dateIsValid
+    ? new Date(activityDate.getTime() - activityDate.getTimezoneOffset() * 60000)
+        .toISOString().slice(0, 16)
+    : "";
+%>
+
+<main class="activity-form-page">
+  <%- include("../partials/flash") %>
+
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">POINTS &amp; PERFORMANCE</p>
+      <h1>Record activity</h1>
+      <p class="page-description muted">
+        Log a verified team action, assign the appropriate points and maintain
+        a consistent performance record for Gyansify.
+      </p>
+    </div>
+
+    <a class="btn btn-light" href="/activities">
+      <span aria-hidden="true">←</span> Activity history
+    </a>
+  </header>
+
+  <% if (formErrors.length) { %>
+    <div class="alert alert-error" role="alert">
+      <strong>Please review the following:</strong>
+      <% formErrors.forEach(error => { %>
+        <p><%= error %></p>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (!availableAgents.length) { %>
+    <div class="alert alert-info" role="status">
+      <strong>No active agents available.</strong>
+      Create an active agent before recording an activity.
+      <a href="/agents/new">Add agent →</a>
+    </div>
+  <% } %>
+
+  <div class="form-layout">
+    <section class="panel">
+      <div class="panel-heading">
+        <span class="section-icon" aria-hidden="true">✎</span>
+        <div>
+          <h2>Activity details</h2>
+          <p class="muted">Complete the required fields before saving.</p>
+        </div>
+      </div>
+
+      <div class="form-content">
+        <form
+          method="post"
+          action="/activities"
+          class="form-stack"
+          id="activityForm"
+        >
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="field" id="agentField">
+            <label class="field-label" for="agentId">
+              <span>Agent <span class="required-mark">*</span></span>
+            </label>
+
+            <select
+              class="control"
+              id="agentId"
+              name="agentId"
+              required
+              <%= availableAgents.length ? "" : "disabled" %>
+            >
+              <option value="">Select an agent</option>
+
+              <% availableAgents.forEach(agent => { %>
+                <option
+                  value="<%= agent._id %>"
+                  <%= selectedAgentId === String(agent._id) ? "selected" : "" %>
+                >
+                  <%= agent.name %><%= agent.team ? " — " + agent.team : "" %>
+                </option>
+              <% }) %>
+            </select>
+
+            <p class="field-help">
+              Select the team member responsible for this activity.
+            </p>
+            <p class="field-error">Please select an agent.</p>
+          </div>
+
+          <div class="field" id="typeField">
+            <label class="field-label" for="activityType">
+              <span>Activity type <span class="required-mark">*</span></span>
+            </label>
+
+            <select
+              class="control"
+              id="activityType"
+              name="type"
+              required
+            >
+              <% allowedTypes.forEach(option => { %>
+                <option
+                  value="<%= option.v %>"
+                  <%= selectedType === option.v ? "selected" : "" %>
+                >
+                  <%= option.t %>
+                </option>
+              <% }) %>
+            </select>
+
+            <p class="field-help">
+              Choose the category that best describes the verified action.
+            </p>
+          </div>
+
+          <div class="two-column">
+            <div class="field" id="pointsField">
+              <label class="field-label" for="points">
+                <span>Points awarded <span class="required-mark">*</span></span>
+              </label>
+
+              <div class="points-input-wrap">
+                <input
+                  class="control"
+                  type="number"
+                  id="points"
+                  name="points"
+                  min="0"
+                  max="100000"
+                  step="1"
+                  required
+                  inputmode="numeric"
+                  value="<%= rawPoints %>"
+                >
+                <span class="input-suffix">POINTS</span>
+              </div>
+
+              <p class="field-help">
+                Use the approved internal scoring policy.
+              </p>
+              <p class="field-error">Enter a whole number between 0 and 100,000.</p>
+            </div>
+
+            <div class="field" id="dateField">
+              <label class="field-label" for="occurredAt">
+                <span>Activity date &amp; time <span class="required-mark">*</span></span>
+              </label>
+
+              <input
+                class="control"
+                type="datetime-local"
+                id="occurredAt"
+                name="occurredAt"
+                required
+                value="<%= dateLocalValue %>"
+              >
+
+              <p class="field-help">
+                Future dates and times are not accepted.
+              </p>
+              <p class="field-error">Enter a valid date and time that is not in the future.</p>
+            </div>
+          </div>
+
+          <div class="scoring-tip">
+            <span aria-hidden="true">ⓘ</span>
+            <div>
+              <strong>Scoring guidance</strong><br>
+              Assign points consistently according to Gyansify's approved
+              internal policy. A higher score should reflect the verified
+              outcome, not just the number of actions.
+            </div>
+          </div>
+
+          <div class="field" id="noteField">
+            <label class="field-label" for="note">
+              <span>Activity note</span>
+              <span class="optional">OPTIONAL</span>
+            </label>
+
+            <textarea
+              class="control"
+              id="note"
+              name="note"
+              rows="4"
+              maxlength="500"
+              placeholder="Add a brief outcome, campaign reference or verification note..."
+            ><%= formActivity.note || "" %></textarea>
+
+            <div class="field-label">
+              <span class="field-help">Do not include passwords or sensitive personal data.</span>
+              <span class="char-count" id="noteCounter">0 / 500</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <span class="muted" style="font-size:10px">
+              <span class="required-mark">*</span> Required fields
+            </span>
+
+            <div class="action-right">
+              <a class="btn btn-light" href="/activities">Cancel</a>
+              <button
+                class="btn btn-primary"
+                type="submit"
+                id="saveActivityButton"
+                <%= availableAgents.length ? "" : "disabled" %>
+              >
+                <span aria-hidden="true">✓</span> Save activity
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="side-column">
+      <section class="panel side-panel">
+        <h3>Activity review</h3>
+        <p class="side-panel-description">
+          Check the details below before submitting the record.
+        </p>
+
+        <div class="review-list">
+          <div class="review-item">
+            <span class="review-icon" aria-hidden="true">♙</span>
+            <div>
+              <div class="review-label">Selected agent</div>
+              <div class="review-value" id="reviewAgent">
+                <%= selectedAgent ? selectedAgent.name : "Not selected" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-divider"></div>
+
+          <div class="review-item">
+            <span class="review-icon" aria-hidden="true">▤</span>
+            <div>
+              <div class="review-label">Activity type</div>
+              <div class="review-value" id="reviewType">
+                <%= (allowedTypes.find(item => item.v === selectedType) || allowedTypes[1]).t %>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-divider"></div>
+
+          <div class="review-item">
+            <span class="review-icon" aria-hidden="true">↗</span>
+            <div>
+              <div class="review-label">Points to award</div>
+              <div class="review-points" id="reviewPoints">
+                +<%= Number.isFinite(Number(rawPoints)) ? Number(rawPoints).toLocaleString("en-IN") : "0" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-divider"></div>
+
+          <div class="review-item">
+            <span class="review-icon" aria-hidden="true">◷</span>
+            <div>
+              <div class="review-label">Activity date</div>
+              <div class="review-value" id="reviewDate">
+                <%= dateIsValid ? activityDate.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "Select a date" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel side-panel">
+        <h3>Before you submit</h3>
+        <p class="side-panel-description">
+          Follow these checks to keep your activity records reliable.
+        </p>
+
+        <div class="workflow-list">
+          <div class="workflow-item">
+            <span class="workflow-number">01</span>
+            <div>
+              <strong>Verify the action</strong>
+              <p>Ensure the activity actually occurred and can be supported by your internal process.</p>
+            </div>
+          </div>
+
+          <div class="workflow-item">
+            <span class="workflow-number">02</span>
+            <div>
+              <strong>Use consistent points</strong>
+              <p>Follow the approved scoring policy instead of assigning arbitrary rewards.</p>
+            </div>
+          </div>
+
+          <div class="workflow-item">
+            <span class="workflow-number">03</span>
+            <div>
+              <strong>Review the date</strong>
+              <p>Choose the actual activity date and time, not the date you wish to record.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <p class="footer-note">
+    Activity entries can affect daily, weekly and monthly performance rankings.
+    Changes to scoring or deletion should be handled through authorized server-side routes.
+  </p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  const form = document.getElementById("activityForm");
+  if (!form) return;
+
+  const agentInput = document.getElementById("agentId");
+  const typeInput = document.getElementById("activityType");
+  const pointsInput = document.getElementById("points");
+  const dateInput = document.getElementById("occurredAt");
+  const noteInput = document.getElementById("note");
+  const noteCounter = document.getElementById("noteCounter");
+  const saveButton = document.getElementById("saveActivityButton");
+
+  const reviewAgent = document.getElementById("reviewAgent");
+  const reviewType = document.getElementById("reviewType");
+  const reviewPoints = document.getElementById("reviewPoints");
+  const reviewDate = document.getElementById("reviewDate");
+
+  const fieldContainers = {
+    agent: document.getElementById("agentField"),
+    points: document.getElementById("pointsField"),
+    date: document.getElementById("dateField")
+  };
+
+  function setError(field, invalid) {
+    const container = fieldContainers[field];
+    if (container) {
+      container.classList.toggle("has-error", invalid);
+    }
+  }
+
+  function updateAgentReview() {
+    const selected = agentInput.options[agentInput.selectedIndex];
+    reviewAgent.textContent =
+      selected && selected.value ? selected.textContent.trim() : "Not selected";
+  }
+
+  function updateTypeReview() {
+    const selected = typeInput.options[typeInput.selectedIndex];
+    reviewType.textContent = selected ? selected.textContent.trim() : "Not selected";
+  }
+
+  function updatePointsReview() {
+    const value = pointsInput.value.trim();
+    const number = Number(value);
+
+    const valid = value !== "" &&
+      Number.isInteger(number) &&
+      number >= 0 &&
+      number <= 100000;
+
+    reviewPoints.textContent = valid
+      ? (number > 0 ? "+" : "") + number.toLocaleString("en-IN")
+      : "Check points";
+
+    setError("points", value !== "" && !valid);
+  }
+
+  function updateDateReview() {
+    if (!dateInput.value) {
+      reviewDate.textContent = "Select a date";
+      setError("date", false);
+      return;
+    }
+
+    const selectedDate = new Date(dateInput.value);
+    const validDate = !Number.isNaN(selectedDate.getTime());
+    const futureDate = validDate && selectedDate.getTime() > Date.now();
+
+    setError("date", !validDate || futureDate);
+
+    reviewDate.textContent = !validDate
+      ? "Invalid date"
+      : selectedDate.toLocaleString("en-IN", {
+          dateStyle: "medium",
+          timeStyle: "short"
+        });
+  }
+
+  function updateNoteCounter() {
+    const length = noteInput.value.length;
+    noteCounter.textContent = length + " / 500";
+    noteCounter.style.color = length >= 480 ? "#b45309" : "#98a2b3";
+  }
+
+  agentInput.addEventListener("change", function () {
+    updateAgentReview();
+    setError("agent", false);
+  });
+
+  typeInput.addEventListener("change", updateTypeReview);
+  pointsInput.addEventListener("input", updatePointsReview);
+  dateInput.addEventListener("input", updateDateReview);
+  dateInput.addEventListener("change", updateDateReview);
+  noteInput.addEventListener("input", updateNoteCounter);
+
+  form.addEventListener("submit", function (event) {
+    const pointsValue = pointsInput.value.trim();
+    const points = Number(pointsValue);
+    const selectedDate = new Date(dateInput.value);
+
+    const agentValid = Boolean(agentInput.value);
+    const pointsValid = pointsValue !== "" &&
+      Number.isInteger(points) &&
+      points >= 0 &&
+      points <= 100000;
+
+    const dateValid = Boolean(dateInput.value) &&
+      !Number.isNaN(selectedDate.getTime()) &&
+      selectedDate.getTime() <= Date.now();
+
+    setError("agent", !agentValid);
+    setError("points", !pointsValid);
+    setError("date", !dateValid);
+
+    if (!agentValid || !pointsValid || !dateValid) {
+      event.preventDefault();
+
+      const firstInvalid = !agentValid
+        ? agentInput
+        : !pointsValid
+          ? pointsInput
+          : dateInput;
+
+      firstInvalid.focus();
+      return;
+    }
+
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      form.reportValidity();
+      return;
+    }
+
+    // Avoid accidental double-click submissions.
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+  });
+
+  // If browser validation prevents submission, keep the button usable.
+  form.addEventListener("invalid", function () {
+    saveButton.disabled = false;
+    saveButton.innerHTML = '<span aria-hidden="true">✓</span> Save activity';
+  }, true);
+
+  updateAgentReview();
+  updateTypeReview();
+  updatePointsReview();
+  updateDateReview();
+  updateNoteCounter();
+})();
+</script>
+
+</body>
+</html>

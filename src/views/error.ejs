@@ -1,0 +1,5 @@
+<%- include("partials/head", { title }) %>
+<%- include("partials/nav") %>
+<main class="page-wrap error-wrap"><div class="error-card"><span class="error-symbol">!</span><h1><%= title %></h1><p class="muted"><%= message %></p><a class="btn btn-primary" href="<%= adminName ? '/dashboard' : '/login' %>">Back to <%= adminName ? 'dashboard' : 'login' %></a></div></main>
+</body>
+</html>

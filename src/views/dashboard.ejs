@@ -1,0 +1,1304 @@
+<%- include("partials/head", {
+  title: title || "Performance Center | Gyansify"
+}) %>
+
+<style>
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --text: #182033;
+  --muted: #718096;
+  --border: #e6eaf2;
+  --primary: #5b4bdb;
+  --primary-light: #f0edff;
+  --green: #0c9667;
+  --radius: 18px;
+  --shadow: 0 8px 30px rgba(25, 35, 65, .055);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+.performance-page {
+  min-height: 100vh;
+  padding: 26px 18px 40px;
+}
+
+.performance-container {
+  width: min(1440px, 100%);
+  margin: auto;
+}
+
+.hero, .panel, .metric, .podium-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  padding: 30px;
+  border-radius: 24px;
+  background: linear-gradient(120deg, #fff, #f0edff);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+  color: #44506a;
+}
+
+.live-dot, .status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #18b77d;
+}
+
+.hero-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 9px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 4vw, 48px);
+  letter-spacing: -1.8px;
+  line-height: 1.1;
+}
+
+h1 span { color: var(--primary); }
+
+.hero-description, .section-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.clock {
+  padding: 12px 15px;
+  min-width: 175px;
+  background: rgba(255,255,255,.8);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.clock-label {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.clock-time {
+  display: block;
+  margin: 5px 0;
+  font-size: 23px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 43px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.button:hover { transform: translateY(-1px); }
+
+.button-primary {
+  color: white;
+  background: var(--primary);
+}
+
+.button-primary:hover { background: #4939c7; }
+
+.button-secondary {
+  color: var(--text);
+  background: white;
+  border-color: var(--border);
+}
+
+.button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid #a79bff;
+  outline-offset: 3px;
+}
+
+/* KPI CARDS */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+  margin: 22px 0 34px;
+}
+
+.metric {
+  padding: 22px;
+  border-radius: var(--radius);
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.metric-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  font-size: 18px;
+}
+
+.metric-value {
+  margin: 14px 0 6px;
+  font-size: 34px;
+  font-weight: 850;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-foot {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric-foot .status-dot { margin-right: 5px; }
+
+.metric-mint .metric-icon { background: #e2fbf1; }
+.metric-amber .metric-icon { background: #fff0d5; }
+
+/* SECTIONS */
+
+.section { margin: 34px 0; }
+
+.section-heading, .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin: 0 0 7px;
+  font-size: 23px;
+  letter-spacing: -.6px;
+}
+
+.period-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.period-link {
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.period-link.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* PODIUM */
+
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px;
+}
+
+.podium-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 25px 18px 20px;
+  border-radius: 20px;
+  text-align: center;
+  min-width: 0;
+}
+
+.podium-card.first {
+  background: linear-gradient(180deg, #f0edff, white 75%);
+  border-color: #d8ceff;
+  transform: translateY(-7px);
+}
+
+.podium-card.second {
+  background: linear-gradient(180deg, #f2f5f9, white 75%);
+}
+
+.podium-card.third {
+  background: linear-gradient(180deg, #fff5e7, white 75%);
+}
+
+.champion {
+  margin-bottom: 10px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1px;
+}
+
+.medal { font-size: 26px; }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 39px;
+  height: 39px;
+  border-radius: 13px;
+  color: #5142c4;
+  background: #ece9ff;
+  font-weight: 850;
+}
+
+.avatar-large {
+  width: 60px;
+  height: 60px;
+  margin: 12px 0;
+  border-radius: 20px;
+  font-size: 22px;
+}
+
+.podium-name {
+  max-width: 100%;
+  margin: 0 0 5px;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+
+.podium-team {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.podium-points {
+  margin: 17px 0 3px;
+  font-size: 30px;
+  font-weight: 850;
+}
+
+.points-caption {
+  margin: 0 0 13px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #e5e0ff;
+  border-radius: 30px;
+  background: #f7f5ff;
+  color: #5142c4;
+  font-size: 11px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.podium-rank {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+/* PANELS AND TABLE */
+
+.panel {
+  margin-top: 23px;
+  padding: 25px;
+  border-radius: 20px;
+}
+
+.text-link {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.text-link:hover { text-decoration: underline; }
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 14px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(390px, 100%);
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #fbfcff;
+}
+
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+
+.rankings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.rankings-table th {
+  padding: 14px;
+  background: #f8f9fc;
+  color: #687287;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.rankings-table td {
+  padding: 13px 14px;
+  border-top: 1px solid #edf0f5;
+}
+
+.rankings-table tbody tr:hover { background: #fbfaff; }
+
+.rank-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: #f0f2f7;
+  font-weight: 850;
+}
+
+.rank-1 { background: #fff0c6; }
+.rank-2 { background: #e9edf4; }
+.rank-3 { background: #ffe8d9; }
+
+.agent-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.agent-details strong { font-size: 12px; }
+
+.agent-details small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.number-cell { font-variant-numeric: tabular-nums; }
+
+.points-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.score-track {
+  display: block;
+  width: 60px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #eceaf7;
+}
+
+.score-fill {
+  display: block;
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #8476f4, #5140cf);
+}
+
+.table-badge { font-size: 10px; }
+
+.table-empty {
+  padding: 26px !important;
+  color: var(--muted);
+  text-align: center;
+}
+
+.panel-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ACTIVITY */
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-item {
+  display: grid;
+  grid-template-columns: 42px minmax(100px, 1fr) auto auto;
+  align-items: center;
+  gap: 13px;
+  padding: 16px 0;
+  border-top: 1px solid #edf0f5;
+}
+
+.activity-item:first-child { border-top: 0; }
+
+.activity-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: #f2efff;
+}
+
+.activity-copy strong { font-size: 13px; }
+
+.activity-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+
+.activity-points {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.activity-time {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.activity-empty {
+  padding: 24px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state {
+  padding: 40px 20px;
+  border: 1px dashed #d9dced;
+  border-radius: 18px;
+  background: white;
+  text-align: center;
+}
+
+.empty-state h3 { margin-bottom: 7px; }
+
+.empty-state p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.empty-icon {
+  margin-bottom: 10px;
+  font-size: 30px;
+  color: var(--primary);
+}
+
+.dashboard-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 27px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+[hidden] { display: none !important; }
+
+@media (max-width: 900px) {
+  .hero-main {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .podium-card.first { transform: none; }
+
+  .activity-item {
+    grid-template-columns: 40px minmax(100px, 1fr) auto;
+  }
+
+  .activity-time {
+    grid-column: 2 / -1;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 640px) {
+  .performance-page { padding: 12px 10px 28px; }
+
+  .hero {
+    padding: 21px 17px;
+    border-radius: 19px;
+  }
+
+  .hero-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clock { width: 100%; }
+
+  .hero-actions .button { width: 100%; }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 15px 0 27px;
+  }
+
+  .metric { padding: 19px; }
+
+  .section-heading, .panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .period-switch { width: 100%; }
+
+  .period-link {
+    flex: 1;
+    text-align: center;
+    padding: 9px 5px;
+  }
+
+  .podium-grid { grid-template-columns: 1fr; }
+
+  .panel {
+    padding: 16px;
+    margin-top: 16px;
+    border-radius: 16px;
+  }
+
+  .table-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-box { width: 100%; }
+
+  .table-toolbar .button { width: 100%; }
+
+  .panel-footer, .dashboard-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .activity-item {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .activity-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .activity-time {
+    grid-column: 2 / -1;
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+</style>
+
+<%- include("partials/nav") %>
+
+<%
+  const rows = Array.isArray(leaderboard) ? leaderboard : [];
+  const topThree = Array.isArray(podium) ? podium : [];
+  const activities = Array.isArray(recentActivities) ? recentActivities : [];
+
+  const currentPeriod = ["daily", "weekly", "monthly"].includes(period)
+    ? period
+    : "daily";
+
+  const safeNumber = value => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+  };
+
+  const formatted = value =>
+    safeNumber(value).toLocaleString("en-IN");
+
+  const maxPoints = Math.max(
+    1,
+    ...rows.map(row => safeNumber(row.points))
+  );
+
+  const periodLabel = {
+    daily: "Today",
+    weekly: "This week",
+    monthly: "This month"
+  }[currentPeriod];
+
+  const personName = person =>
+    String(person?.name || "Unknown agent").trim();
+
+  const initials = name =>
+    String(name || "?").trim().slice(0, 1).toUpperCase();
+
+  const dateLabel = value => {
+    const date = value ? new Date(value) : null;
+
+    return date && !Number.isNaN(date.getTime())
+      ? date.toLocaleString("en-IN", {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone: "Asia/Kolkata"
+        })
+      : "Date unavailable";
+  };
+%>
+
+<main class="performance-page">
+  <div class="performance-container">
+
+    <header class="hero">
+      <div class="brand">
+        <span class="live-dot"></span>
+        GYANSIFY <span>/</span> PERFORMANCE CENTER
+      </div>
+
+      <div class="hero-main">
+        <div>
+          <p class="eyebrow">TEAM INTELLIGENCE</p>
+          <h1>Performance <span>overview</span></h1>
+          <p class="hero-description">
+            Track team activity, celebrate wins, and understand performance momentum.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <div class="clock">
+            <span class="clock-label">INDIA STANDARD TIME</span>
+            <time id="dashboard-clock" class="clock-time">--:--:--</time>
+            <span id="dashboard-date" class="clock-date">Loading date…</span>
+          </div>
+
+          <a class="button button-primary" href="/activities/new">
+            ＋ Record activity
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="metrics-grid" aria-label="Performance summary">
+
+      <article class="metric">
+        <div class="metric-top">
+          <span>Total agents</span>
+          <span class="metric-icon">♙</span>
+        </div>
+        <p class="metric-value"><%= formatted(agentsCount) %></p>
+        <p class="metric-foot">
+          <span class="status-dot"></span>
+          <%= formatted(activeCount) %> active agents
+        </p>
+      </article>
+
+      <article class="metric metric-mint">
+        <div class="metric-top">
+          <span>Points earned</span>
+          <span class="metric-icon">↗</span>
+        </div>
+        <p class="metric-value"><%= formatted(totalPoints) %></p>
+        <p class="metric-foot"><%= periodLabel %> performance</p>
+      </article>
+
+      <article class="metric metric-amber">
+        <div class="metric-top">
+          <span>Ranked agents</span>
+          <span class="metric-icon">🏆</span>
+        </div>
+        <p class="metric-value"><%= formatted(rows.length) %></p>
+        <p class="metric-foot">Agents with recorded points this period</p>
+      </article>
+
+    </section>
+
+    <section class="section" aria-labelledby="performers-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">THE HALL OF FAME</p>
+          <h2 id="performers-title">Top performers</h2>
+          <p class="section-description">
+            Recognizing the people moving the numbers forward.
+          </p>
+        </div>
+
+        <nav class="period-switch" aria-label="Leaderboard period">
+          <% [["daily","Today"],["weekly","Weekly"],["monthly","Monthly"]].forEach(([value,label]) => { %>
+            <a
+              href="/dashboard?period=<%= value %>"
+              class="period-link <%= currentPeriod === value ? 'active' : '' %>"
+              <%= currentPeriod === value ? 'aria-current="page"' : '' %>
+            ><%= label %></a>
+          <% }) %>
+        </nav>
+      </div>
+
+      <% if (topThree.length) { %>
+        <div class="podium-grid">
+          <% [topThree[1], topThree[0], topThree[2]].forEach(person => { if (person) { %>
+            <article class="podium-card <%= person.rank === 1 ? 'first' : person.rank === 2 ? 'second' : 'third' %>">
+
+              <% if (person.rank === 1) { %>
+                <div class="champion">★ TOP PERFORMER</div>
+              <% } %>
+
+              <div class="medal">
+                <%= person.rank === 1 ? "👑" : person.rank === 2 ? "🥈" : "🥉" %>
+              </div>
+
+              <div class="avatar avatar-large">
+                <%= initials(person.name) %>
+              </div>
+
+              <h3 class="podium-name"><%= personName(person) %></h3>
+
+              <p class="podium-team">
+                <%= person.team || "Unassigned team" %>
+              </p>
+
+              <p class="podium-points"><%= formatted(person.points) %></p>
+              <p class="points-caption">POINTS EARNED</p>
+
+              <span class="badge-pill">
+                <%= person.badge?.icon || "✦" %>
+                <%= person.badge?.name || "Rising Star" %>
+              </span>
+
+              <p class="podium-rank">
+                RANK <strong>#<%= formatted(person.rank) %></strong>
+              </p>
+
+            </article>
+          <% } }) %>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-icon">✦</div>
+          <h3>Your leaderboard starts here</h3>
+          <p>Add an agent and record their first call, lead, meeting, or conversion.</p>
+          <a href="/activities/new" class="button button-primary">
+            Record first activity
+          </a>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="panel" aria-labelledby="rankings-title">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow"><%= periodLabel.toUpperCase() %> SNAPSHOT</p>
+          <h2 id="rankings-title"><%= periodLabel %> rankings</h2>
+          <p class="section-description">
+            Compare activity volume, points, and achievements.
+          </p>
+        </div>
+
+        <a class="text-link" href="/activities">
+          View activity history →
+        </a>
+      </div>
+
+      <div class="table-toolbar">
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input
+            id="agent-search"
+            type="search"
+            placeholder="Search agent or team…"
+            autocomplete="off"
+            aria-label="Search agent rankings"
+          >
+          <span aria-hidden="true">/</span>
+        </label>
+
+        <button id="export-rankings" class="button button-secondary" type="button">
+          ↓ Export CSV
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="rankings-table" class="rankings-table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Agent / Team</th>
+              <th scope="col">Calls</th>
+              <th scope="col">Qualified leads</th>
+              <th scope="col">Meetings</th>
+              <th scope="col">Conversions</th>
+              <th scope="col">Points</th>
+              <th scope="col">Achievement</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% rows.forEach(row => {
+              const points = safeNumber(row.points);
+              const scorePercent = Math.max(
+                0,
+                Math.min(100, Math.round(points / maxPoints * 100))
+              );
+
+              const displayName = personName(row);
+              const displayTeam = row.team || "Unassigned team";
+            %>
+              <tr
+                class="ranking-row"
+                data-search="<%= (displayName + ' ' + displayTeam).toLowerCase() %>"
+              >
+                <td>
+                  <span class="rank-chip <%= row.rank <= 3 ? 'rank-' + row.rank : '' %>">
+                    <%= row.rank >= 1 && row.rank <= 3
+                      ? ["🥇","🥈","🥉"][row.rank - 1]
+                      : formatted(row.rank) %>
+                  </span>
+                </td>
+
+                <td>
+                  <div class="agent-cell">
+                    <span class="avatar"><%= initials(displayName) %></span>
+                    <span class="agent-details">
+                      <strong><%= displayName %></strong>
+                      <small><%= displayTeam %></small>
+                    </span>
+                  </div>
+                </td>
+
+                <td class="number-cell"><%= formatted(row.calls) %></td>
+                <td class="number-cell"><%= formatted(row.qualifiedLeads) %></td>
+                <td class="number-cell"><%= formatted(row.meetings) %></td>
+                <td class="number-cell"><%= formatted(row.conversions) %></td>
+
+                <td>
+                  <div class="points-cell">
+                    <strong><%= formatted(points) %></strong>
+                    <span
+                      class="score-track"
+                      role="img"
+                      aria-label="<%= scorePercent %>% of highest score"
+                    >
+                      <span
+                        class="score-fill"
+                        style="width:<%= scorePercent %>%"
+                      ></span>
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <span class="badge-pill">
+                    <%= row.badge?.icon || "✦" %>
+                    <%= row.badge?.name || "Rising Star" %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+
+            <% if (!rows.length) { %>
+              <tr>
+                <td colspan="8" class="table-empty">
+                  No scored activity for this period yet.
+                </td>
+              </tr>
+            <% } %>
+
+            <tr id="no-search-results" hidden>
+              <td colspan="8" class="table-empty">
+                No agents match your search.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-footer">
+        <span>GYANSIFY / TEAM PERFORMANCE</span>
+        <span><strong id="visible-agent-count"><%= rows.length %></strong> agents shown</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="recent-activity-title">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">WHAT'S HAPPENING</p>
+          <h2 id="recent-activity-title">Recent activity</h2>
+          <p class="section-description">
+            The latest updates from across your team.
+          </p>
+        </div>
+
+        <a class="text-link" href="/activities">All activities →</a>
+      </div>
+
+      <% if (activities.length) { %>
+        <div class="activity-list">
+          <% activities.forEach(item => {
+            const type = String(item.type || "other");
+            const activityIcon = {
+              call: "📞",
+              qualified_lead: "🌱",
+              meeting: "🤝",
+              conversion: "🎯",
+              other: "✦"
+            }[type] || "✦";
+
+            const agent = item.agent?.name || "Deleted agent";
+            const occurredAt = item.occurredAt
+              ? new Date(item.occurredAt)
+              : null;
+
+            const validDate =
+              occurredAt && !Number.isNaN(occurredAt.getTime());
+          %>
+            <article class="activity-item">
+              <span class="activity-icon" aria-hidden="true">
+                <%= activityIcon %>
+              </span>
+
+              <div class="activity-copy">
+                <strong><%= agent %></strong>
+                <p>
+                  <%= type.replace(/_/g, " ") %>
+                  <% if (item.note) { %>
+                    · <%= item.note %>
+                  <% } %>
+                </p>
+              </div>
+
+              <span class="activity-points">
+                +<%= formatted(item.points) %> pts
+              </span>
+
+              <time <%= validDate ? `datetime="${occurredAt.toISOString()}"` : "" %>>
+                <%= dateLabel(item.occurredAt) %>
+              </time>
+            </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="activity-empty">No activities recorded yet.</div>
+      <% } %>
+    </section>
+
+    <footer class="dashboard-footer">
+      <span>© <%= new Date().getFullYear() %> Gyansify · Internal team performance</span>
+      <span><span class="status-dot"></span> Data shown as of page refresh</span>
+    </footer>
+
+  </div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const clock = document.getElementById("dashboard-clock");
+  const date = document.getElementById("dashboard-date");
+  const search = document.getElementById("agent-search");
+  const table = document.getElementById("rankings-table");
+  const exportButton = document.getElementById("export-rankings");
+  const visibleCount = document.getElementById("visible-agent-count");
+  const noResults = document.getElementById("no-search-results");
+
+  function updateClock() {
+    const now = new Date();
+
+    if (clock) {
+      clock.textContent = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      }).format(now);
+    }
+
+    if (date) {
+      date.textContent = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        weekday: "long",
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      }).format(now);
+    }
+  }
+
+  function rankingRows() {
+    return table
+      ? Array.from(table.querySelectorAll("tbody tr.ranking-row"))
+      : [];
+  }
+
+  function applySearch() {
+    const query = (search?.value || "").trim().toLowerCase();
+    let count = 0;
+
+    rankingRows().forEach(row => {
+      const searchable = (
+        row.dataset.search || row.textContent || ""
+      ).toLowerCase();
+
+      const matches = !query || searchable.includes(query);
+      row.hidden = !matches;
+
+      if (matches) count++;
+    });
+
+    if (visibleCount) {
+      visibleCount.textContent = String(count);
+    }
+
+    if (noResults) {
+      noResults.hidden = !query || count !== 0;
+    }
+  }
+
+  function csvCell(value) {
+    let text = String(value ?? "")
+      .replace(/\r?\n/g, " ")
+      .trim();
+
+    // Prevent spreadsheet formula injection.
+    if (/^[=+\-@\t\r]/.test(text)) {
+      text = "'" + text;
+    }
+
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function exportCsv() {
+    if (!table) return;
+
+    const headers = Array.from(
+      table.querySelectorAll("thead th")
+    ).map(th => th.innerText.trim());
+
+    const rows = rankingRows().filter(row => !row.hidden);
+
+    if (!rows.length) {
+      window.alert("There are no visible rankings to export.");
+      return;
+    }
+
+    const records = [headers];
+
+    rows.forEach(row => {
+      const cells = Array.from(row.querySelectorAll("td"));
+
+      records.push(cells.map((cell, index) => {
+        if (index === 1) {
+          const details = cell.querySelector(".agent-details");
+          return details
+            ? details.innerText.replace(/\n/g, " — ")
+            : cell.innerText.trim();
+        }
+
+        if (index === 6) {
+          return cell.querySelector(".points-cell strong")
+            ?.innerText.trim() || cell.innerText.trim();
+        }
+
+        return cell.innerText.replace(/\s+/g, " ").trim();
+      }));
+    });
+
+    const csv = "\uFEFF" + records
+      .map(record => record.map(csvCell).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const period = new URL(window.location.href)
+      .searchParams.get("period") || "daily";
+
+    link.href = url;
+    link.download =
+      "gyansify-performance-" +
+      period + "-" +
+      new Date().toISOString().slice(0, 10) +
+      ".csv";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  if (search) {
+    search.addEventListener("input", applySearch);
+  }
+
+  if (exportButton) {
+    exportButton.addEventListener("click", exportCsv);
+  }
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "/" && !event.ctrlKey &&
+        !event.metaKey && !event.altKey) {
+      const target = event.target;
+
+      const typing = target && (
+        target.isContentEditable ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+      );
+
+      if (!typing && search) {
+        event.preventDefault();
+        search.focus();
+      }
+    }
+
+    if (
+      event.key === "Escape" &&
+      search &&
+      document.activeElement === search
+    ) {
+      search.value = "";
+      applySearch();
+      search.blur();
+    }
+  });
+
+  updateClock();
+  window.setInterval(updateClock, 1000);
+  applySearch();
+})();
+</script>
+
+</body>
+</html>

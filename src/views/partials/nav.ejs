@@ -1,0 +1,15 @@
+<nav class="topbar">
+  <a class="brand" href="/dashboard"><span class="brand-mark">G</span><span>Gyansify <small>TEAM PERFORMANCE</small></span></a>
+  <% if (adminName) { %>
+    <div class="nav-actions">
+      <a class="<%= currentPath.startsWith('/dashboard') ? 'active' : '' %>" href="/dashboard">Dashboard</a>
+      <a class="<%= currentPath.startsWith('/agents') ? 'active' : '' %>" href="/agents">Agents</a>
+      <a class="<%= currentPath.startsWith('/activities') ? 'active' : '' %>" href="/activities">Activities</a>
+      <span class="admin-label"><%= adminName %></span>
+      <form method="post" action="/logout" class="inline-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="link-button" type="submit">Log out</button>
+      </form>
+    </div>
+  <% } %>
+</nav>

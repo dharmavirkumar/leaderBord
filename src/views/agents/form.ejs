@@ -1,0 +1,19 @@
+<%- include("../partials/head", { title }) %>
+<%- include("../partials/nav") %>
+<main class="page-wrap narrow-wrap">
+  <p class="eyebrow">TEAM DIRECTORY</p><h1><%= isEdit ? 'Edit agent' : 'Add an agent' %></h1><p class="muted">Keep contact and team information up to date.</p>
+  <% if (errors.length) { %><div class="alert alert-error"><% errors.forEach(e => { %><p><%= e %></p><% }) %></div><% } %>
+  <section class="panel form-panel">
+    <form method="post" action="<%= isEdit ? '/agents/' + agent._id + '/edit' : '/agents' %>" class="form-stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Full name<input name="name" required minlength="2" maxlength="80" value="<%= agent.name || '' %>" autocomplete="name"></label>
+      <label>Email address<input type="email" name="email" required maxlength="254" value="<%= agent.email || '' %>" autocomplete="email"></label>
+      <label>Phone number <span class="optional">(optional)</span><input name="phone" maxlength="25" value="<%= agent.phone || '' %>" autocomplete="tel"></label>
+      <label>Team<input name="team" required minlength="2" maxlength="60" value="<%= agent.team || 'Calling Team' %>"></label>
+      <label class="check-label"><input type="checkbox" name="active" <%= agent.active === false ? '' : 'checked' %>> Active agent</label>
+      <div class="form-actions"><a class="btn btn-light" href="/agents">Cancel</a><button class="btn btn-primary" type="submit"><%= isEdit ? 'Save changes' : 'Create agent' %></button></div>
+    </form>
+  </section>
+</main>
+</body>
+</html>

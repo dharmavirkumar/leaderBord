@@ -1,0 +1,1148 @@
+
+<%- include("../partials/head", { title: title || "Activity History | Gyansify" }) %>
+
+<style>
+  :root {
+    --activity-bg: #f5f7fb;
+    --activity-card: #ffffff;
+    --activity-text: #172033;
+    --activity-muted: #718096;
+    --activity-border: #e7ebf2;
+    --activity-primary: #4f46e5;
+    --activity-primary-light: #eef2ff;
+    --activity-green: #059669;
+    --activity-red: #dc2626;
+    --activity-radius: 18px;
+  }
+
+  body {
+    background: var(--activity-bg);
+  }
+
+  .activity-page,
+  .activity-page * {
+    box-sizing: border-box;
+  }
+
+  .activity-page {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    padding: 30px 28px 36px;
+    color: var(--activity-text);
+  }
+
+  .activity-page a {
+    text-decoration: none;
+  }
+
+  .activity-page button,
+  .activity-page input,
+  .activity-page select {
+    font: inherit;
+  }
+
+  .activity-page .muted {
+    color: var(--activity-muted);
+    line-height: 1.65;
+  }
+
+  .activity-page .eyebrow {
+    margin: 0 0 8px;
+    color: var(--activity-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+  }
+
+  .activity-page .page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 26px;
+  }
+
+  .activity-page .page-heading h1 {
+    margin: 0;
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.2;
+  }
+
+  .activity-page .page-heading .muted {
+    margin: 10px 0 0;
+    font-size: 14px;
+  }
+
+  .activity-page .heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .activity-page .btn {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 750;
+    transition: transform .18s ease, box-shadow .18s ease,
+      background .18s ease;
+  }
+
+  .activity-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .activity-page .btn-primary {
+    color: #fff;
+    background: var(--activity-primary);
+    box-shadow: 0 5px 14px rgb(79 70 229 / 18%);
+  }
+
+  .activity-page .btn-primary:hover {
+    background: #4338ca;
+  }
+
+  .activity-page .btn-light {
+    color: #374151;
+    background: #fff;
+    border-color: var(--activity-border);
+  }
+
+  .activity-page .btn-light:hover {
+    background: #f8fafc;
+  }
+
+  .activity-page .btn-danger-light {
+    min-height: 34px;
+    padding: 7px 11px;
+    color: #b91c1c;
+    background: #fff1f2;
+    border-color: #ffe0e4;
+    font-size: 12px;
+  }
+
+  .activity-page .btn-danger-light:hover {
+    background: #ffe4e6;
+  }
+
+  .activity-page .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 17px;
+    margin-bottom: 24px;
+  }
+
+  .activity-page .summary-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 135px;
+    padding: 22px;
+    border: 1px solid var(--activity-border);
+    border-radius: var(--activity-radius);
+    background: var(--activity-card);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 3%);
+  }
+
+  .activity-page .summary-card::after {
+    position: absolute;
+    right: -23px;
+    bottom: -34px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--summary-glow, #eef2ff);
+    content: "";
+    opacity: .8;
+  }
+
+  .activity-page .summary-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .activity-page .summary-label {
+    color: var(--activity-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .activity-page .summary-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--summary-glow, #eef2ff);
+    font-size: 18px;
+  }
+
+  .activity-page .summary-number {
+    position: relative;
+    z-index: 1;
+    margin-top: 12px;
+    font-size: 30px;
+    font-weight: 850;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .activity-page .summary-foot {
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+    color: var(--activity-muted);
+    font-size: 11px;
+  }
+
+  .activity-page .panel {
+    overflow: hidden;
+    border: 1px solid var(--activity-border);
+    border-radius: var(--activity-radius);
+    background: var(--activity-card);
+    box-shadow: 0 5px 22px rgb(15 23 42 / 3%);
+  }
+
+  .activity-page .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 23px 24px;
+    border-bottom: 1px solid var(--activity-border);
+  }
+
+  .activity-page .panel-header h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+  }
+
+  .activity-page .panel-header p {
+    margin: 6px 0 0;
+    font-size: 12px;
+  }
+
+  .activity-page .live-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid #d1fae5;
+    border-radius: 999px;
+    color: #047857;
+    background: #ecfdf5;
+    font-size: 11px;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+
+  .activity-page .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+
+  .activity-page .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--activity-border);
+    background: #fcfcfe;
+  }
+
+  .activity-page .search-wrap {
+    position: relative;
+    flex: 1 1 260px;
+    min-width: 190px;
+  }
+
+  .activity-page .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    color: #9ca3af;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .activity-page .search-input,
+  .activity-page .filter-select {
+    width: 100%;
+    min-height: 42px;
+    outline: none;
+    border: 1px solid #e1e6ef;
+    border-radius: 10px;
+    color: #263247;
+    background: #fff;
+    font-size: 12px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .activity-page .search-input {
+    padding: 10px 13px 10px 38px;
+  }
+
+  .activity-page .filter-select {
+    width: auto;
+    min-width: 155px;
+    padding: 10px 30px 10px 12px;
+  }
+
+  .activity-page .search-input:focus,
+  .activity-page .filter-select:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
+  }
+
+  .activity-page .toolbar .btn {
+    min-height: 42px;
+  }
+
+  .activity-page .results-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 24px;
+    color: var(--activity-muted);
+    font-size: 12px;
+  }
+
+  .activity-page .results-bar strong {
+    color: #374151;
+  }
+
+  .activity-page .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .activity-page table {
+    width: 100%;
+    min-width: 940px;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .activity-page thead th {
+    padding: 13px 18px;
+    border-top: 1px solid #edf0f5;
+    border-bottom: 1px solid #edf0f5;
+    color: #778196;
+    background: #f9fafc;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .85px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .activity-page tbody td {
+    padding: 17px 18px;
+    border-bottom: 1px solid #f0f2f6;
+    color: #475569;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  .activity-page tbody tr {
+    transition: background .15s ease;
+  }
+
+  .activity-page tbody tr:hover {
+    background: #fafbff;
+  }
+
+  .activity-page tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .activity-page .date-main {
+    color: #263247;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .activity-page .date-sub {
+    margin-top: 5px;
+    color: #929bad;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .activity-page .agent-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 155px;
+  }
+
+  .activity-page .agent-avatar {
+    display: grid;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid #e0e7ff;
+    border-radius: 11px;
+    color: #4f46e5;
+    background: #eef2ff;
+    font-size: 12px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .activity-page .agent-name {
+    max-width: 175px;
+    overflow: hidden;
+    color: #263247;
+    font-size: 12px;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activity-page .agent-caption {
+    margin-top: 4px;
+    color: #9aa2b1;
+    font-size: 10px;
+  }
+
+  .activity-page .activity-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #475569;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+
+  .activity-page .points-value {
+    color: var(--activity-green);
+    font-size: 13px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .activity-page .note-cell {
+    max-width: 240px;
+    color: #7c8799;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .activity-page .action-cell {
+    text-align: right;
+  }
+
+  .activity-page .table-empty {
+    padding: 54px 20px;
+    color: #7b8495;
+    text-align: center;
+  }
+
+  .activity-page .empty-icon {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 14px;
+    place-items: center;
+    border-radius: 16px;
+    background: #eef2ff;
+    font-size: 23px;
+  }
+
+  .activity-page .empty-title {
+    margin-bottom: 6px;
+    color: #263247;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .activity-page .empty-message {
+    font-size: 12px;
+  }
+
+  .activity-page .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 24px;
+    border-top: 1px solid var(--activity-border);
+  }
+
+  .activity-page .pagination-info {
+    color: var(--activity-muted);
+    font-size: 12px;
+  }
+
+  .activity-page .pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .activity-page .pagination .btn {
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .activity-page .footer-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 19px;
+    padding: 14px 16px;
+    border: 1px solid #e3e9ff;
+    border-radius: 12px;
+    color: #667085;
+    background: #f0f4ff;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .activity-page .footer-note strong {
+    color: #374151;
+  }
+
+  .activity-page .no-results-row[hidden],
+  .activity-page .activity-row[hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 850px) {
+    .activity-page {
+      padding: 22px 16px 28px;
+    }
+
+    .activity-page .summary-grid {
+      gap: 12px;
+    }
+
+    .activity-page .summary-card {
+      padding: 17px;
+    }
+
+    .activity-page .panel-header,
+    .activity-page .toolbar,
+    .activity-page .results-bar {
+      padding-right: 17px;
+      padding-left: 17px;
+    }
+
+    .activity-page .panel-header {
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .activity-page {
+      padding: 18px 12px 24px;
+    }
+
+    .activity-page .page-heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-page .heading-actions {
+      width: 100%;
+    }
+
+    .activity-page .heading-actions .btn {
+      flex: 1;
+    }
+
+    .activity-page .summary-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .activity-page .summary-card {
+      min-height: 112px;
+    }
+
+    .activity-page .summary-number {
+      font-size: 26px;
+    }
+
+    .activity-page .panel-header {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 19px 16px;
+    }
+
+    .activity-page .toolbar {
+      align-items: stretch;
+      padding: 15px 14px;
+    }
+
+    .activity-page .search-wrap {
+      flex-basis: 100%;
+    }
+
+    .activity-page .filter-select {
+      flex: 1 1 130px;
+      min-width: 0;
+    }
+
+    .activity-page .toolbar .btn {
+      flex: 1 1 auto;
+    }
+
+    .activity-page .results-bar {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 13px 15px;
+    }
+
+    .activity-page .pagination {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 17px 15px;
+    }
+
+    .activity-page .pagination-actions {
+      width: 100%;
+    }
+
+    .activity-page .pagination-actions .btn {
+      flex: 1;
+    }
+  }
+
+  @media print {
+    body {
+      background: #fff !important;
+    }
+
+    .activity-page {
+      width: 100%;
+      padding: 0;
+    }
+
+    .activity-page .heading-actions,
+    .activity-page .toolbar,
+    .activity-page .action-cell,
+    .activity-page .pagination,
+    .activity-page .footer-note,
+    .activity-page .live-status {
+      display: none !important;
+    }
+
+    .activity-page .panel,
+    .activity-page .summary-card {
+      box-shadow: none;
+      break-inside: avoid;
+    }
+
+    .activity-page .table-wrap {
+      overflow: visible;
+    }
+
+    .activity-page table {
+      min-width: 0;
+    }
+
+    .activity-page thead th,
+    .activity-page tbody td {
+      padding: 8px;
+      font-size: 9px;
+    }
+  }
+</style>
+
+<%- include("../partials/nav") %>
+
+<%
+  const activityRows = Array.isArray(activities) ? activities : [];
+  const safeTotal = Number(total) || 0;
+  const currentPage = Number(page) || 1;
+  const totalPages = Number(pages) || 1;
+
+  const pagePoints = activityRows.reduce((sum, item) => {
+    const value = Number(item.points);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
+
+  const activityTypeLabel = (value) => {
+    return String(value || "other")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, char => char.toUpperCase());
+  };
+
+  const agentName = (item) => {
+    return item.agent && item.agent.name
+      ? String(item.agent.name)
+      : "Deleted agent";
+  };
+
+  const agentInitials = (name) => {
+    return String(name || "DA")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0))
+      .join("")
+      .toUpperCase() || "DA";
+  };
+%>
+
+<main class="activity-page">
+  <%- include("../partials/flash") %>
+
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">GYANSIFY · AUDIT TRAIL</p>
+      <h1>Activity history</h1>
+      <p class="muted">
+        Track recorded events, review points and maintain a clear performance history.
+      </p>
+    </div>
+
+    <div class="heading-actions">
+      <button class="btn btn-light" type="button" id="printActivities">
+        <span aria-hidden="true">⎙</span> Print report
+      </button>
+
+      <a class="btn btn-primary" href="/activities/new">
+        <span aria-hidden="true">＋</span> Record activity
+      </a>
+    </div>
+  </header>
+
+  <section class="summary-grid" aria-label="Activity summary">
+    <article class="summary-card" style="--summary-glow:#eef2ff">
+      <div class="summary-top">
+        <span class="summary-label">Total activity records</span>
+        <span class="summary-icon" aria-hidden="true">▤</span>
+      </div>
+      <div class="summary-number"><%= safeTotal.toLocaleString("en-IN") %></div>
+      <div class="summary-foot">All records across available pages</div>
+    </article>
+
+    <article class="summary-card" style="--summary-glow:#d1fae5">
+      <div class="summary-top">
+        <span class="summary-label">Points on this page</span>
+        <span class="summary-icon" aria-hidden="true">↗</span>
+      </div>
+      <div class="summary-number"><%= pagePoints.toLocaleString("en-IN") %></div>
+      <div class="summary-foot">Sum of points in the current page's records</div>
+    </article>
+
+    <article class="summary-card" style="--summary-glow:#fef3c7">
+      <div class="summary-top">
+        <span class="summary-label">Current page</span>
+        <span class="summary-icon" aria-hidden="true">▦</span>
+      </div>
+      <div class="summary-number"><%= currentPage %><span style="color:#9ca3af;font-size:18px"> / <%= totalPages %></span></div>
+      <div class="summary-foot">Browse activity records page by page</div>
+    </article>
+  </section>
+
+  <section class="panel" aria-labelledby="activityPanelTitle">
+    <div class="panel-header">
+      <div>
+        <h2 id="activityPanelTitle">Recorded activities</h2>
+        <p class="muted">
+          Review activity details, point allocations and audit history.
+        </p>
+      </div>
+
+      <span class="live-status">
+        <span class="status-dot"></span>
+        Audit records
+      </span>
+    </div>
+
+    <div class="toolbar">
+      <label class="search-wrap">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          class="search-input"
+          type="search"
+          id="activitySearch"
+          placeholder="Search agent, activity, note or points..."
+          aria-label="Search activities"
+          autocomplete="off"
+        >
+      </label>
+
+      <select class="filter-select" id="activityTypeFilter" aria-label="Filter by activity type">
+        <option value="">All activity types</option>
+        <% [...new Set(activityRows.map(item => String(item.type || "other")))].sort().forEach(type => { %>
+          <option value="<%= type %>"><%= activityTypeLabel(type) %></option>
+        <% }) %>
+      </select>
+
+      <select class="filter-select" id="activitySort" aria-label="Sort activities">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="points-high">Highest points</option>
+        <option value="points-low">Lowest points</option>
+        <option value="agent">Agent A–Z</option>
+      </select>
+
+      <button class="btn btn-light" type="button" id="resetActivityFilters">
+        Reset
+      </button>
+
+      <button class="btn btn-light" type="button" id="exportActivities">
+        ↓ Export CSV
+      </button>
+    </div>
+
+    <div class="results-bar">
+      <span id="activityResultCount" aria-live="polite">
+        Showing <strong><%= activityRows.length %></strong> records on this page
+      </span>
+      <span>All times are displayed in the server-rendered locale.</span>
+    </div>
+
+    <div class="table-wrap">
+      <table id="activityTable">
+        <thead>
+          <tr>
+            <th>Date &amp; time</th>
+            <th>Agent</th>
+            <th>Activity type</th>
+            <th>Points</th>
+            <th>Note</th>
+            <th class="action-cell">Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="activityTableBody">
+          <% activityRows.forEach(item => {
+            const name = agentName(item);
+            const type = String(item.type || "other");
+            const note = String(item.note || "");
+            const date = new Date(item.occurredAt);
+            const validDate = !Number.isNaN(date.getTime());
+            const timestamp = validDate ? date.getTime() : 0;
+            const points = Number(item.points) || 0;
+          %>
+            <tr
+              class="activity-row"
+              data-agent="<%= name.toLowerCase() %>"
+              data-type="<%= type %>"
+              data-note="<%= note.toLowerCase() %>"
+              data-points="<%= points %>"
+              data-date="<%= timestamp %>"
+              data-date-label="<%= validDate ? date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Invalid date' %>"
+              data-agent-label="<%= name %>"
+              data-type-label="<%= activityTypeLabel(type) %>"
+              data-note-label="<%= note || '—' %>"
+            >
+              <td>
+                <div class="date-main">
+                  <%= validDate ? date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Invalid date" %>
+                </div>
+                <div class="date-sub">
+                  <%= validDate ? date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—" %>
+                </div>
+              </td>
+
+              <td>
+                <div class="agent-cell">
+                  <span class="agent-avatar" aria-hidden="true"><%= agentInitials(name) %></span>
+                  <div>
+                    <div class="agent-name"><%= name %></div>
+                    <div class="agent-caption"><%= item.agent ? "Recorded agent" : "Agent unavailable" %></div>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <span class="activity-type"><%= activityTypeLabel(type) %></span>
+              </td>
+
+              <td>
+                <strong class="points-value"><%= points > 0 ? "+" : "" %><%= points.toLocaleString("en-IN") %></strong>
+              </td>
+
+              <td class="note-cell"><%= note || "—" %></td>
+
+              <td class="action-cell">
+                <form
+                  method="post"
+                  action="/activities/<%= item._id %>/delete"
+                  class="delete-activity-form"
+                >
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-danger-light" type="submit">
+                    Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+
+          <tr id="noActivitiesRow" class="no-results-row" <%= activityRows.length ? "hidden" : "" %>>
+            <td colspan="6" class="table-empty">
+              <div class="empty-icon" aria-hidden="true">▤</div>
+              <div class="empty-title">No activity records yet</div>
+              <div class="empty-message">
+                Record your first activity to start tracking performance.
+              </div>
+              <div style="margin-top:16px">
+                <a href="/activities/new" class="btn btn-primary">＋ Record activity</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr id="noResultsRow" class="no-results-row" hidden>
+            <td colspan="6" class="table-empty">
+              <div class="empty-icon" aria-hidden="true">⌕</div>
+              <div class="empty-title">No matching activities</div>
+              <div class="empty-message">
+                Try another search term or reset your filters.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (totalPages > 1) { %>
+      <div class="pagination">
+        <div class="pagination-info">
+          Page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong>
+          · <%= safeTotal.toLocaleString("en-IN") %> total records
+        </div>
+
+        <div class="pagination-actions">
+          <% if (currentPage > 1) { %>
+            <a class="btn btn-light" href="/activities?page=<%= currentPage - 1 %>">
+              ← Previous
+            </a>
+          <% } %>
+
+          <% if (currentPage < totalPages) { %>
+            <a class="btn btn-light" href="/activities?page=<%= currentPage + 1 %>">
+              Next →
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </section>
+
+  <div class="footer-note">
+    <span aria-hidden="true">ⓘ</span>
+    <div>
+      <strong>Audit and ranking note:</strong>
+      Activity deletion is a permanent action if your server route deletes the record.
+      Ensure your delete route checks authentication, authorization and CSRF protection.
+      Rankings should be recalculated from the stored activity records by the server.
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  const searchInput = document.getElementById("activitySearch");
+  const typeFilter = document.getElementById("activityTypeFilter");
+  const sortSelect = document.getElementById("activitySort");
+  const resetButton = document.getElementById("resetActivityFilters");
+  const exportButton = document.getElementById("exportActivities");
+  const printButton = document.getElementById("printActivities");
+  const tableBody = document.getElementById("activityTableBody");
+  const resultCount = document.getElementById("activityResultCount");
+  const noActivitiesRow = document.getElementById("noActivitiesRow");
+  const noResultsRow = document.getElementById("noResultsRow");
+
+  if (!tableBody) return;
+
+  const rows = Array.from(tableBody.querySelectorAll(".activity-row"));
+
+  function getValue(row, key) {
+    return row.dataset[key] || "";
+  }
+
+  function applyActivityFilters() {
+    const query = (searchInput.value || "").trim().toLowerCase();
+    const selectedType = typeFilter.value;
+    const sortBy = sortSelect.value;
+
+    const filteredRows = rows.filter(function (row) {
+      const searchableText = [
+        getValue(row, "agent"),
+        getValue(row, "type"),
+        getValue(row, "note"),
+        getValue(row, "points"),
+        getValue(row, "dateLabel")
+      ].join(" ").toLowerCase();
+
+      const matchesSearch = !query || searchableText.includes(query);
+      const matchesType = !selectedType || getValue(row, "type") === selectedType;
+
+      return matchesSearch && matchesType;
+    });
+
+    filteredRows.sort(function (a, b) {
+      const dateA = Number(getValue(a, "date")) || 0;
+      const dateB = Number(getValue(b, "date")) || 0;
+      const pointsA = Number(getValue(a, "points")) || 0;
+      const pointsB = Number(getValue(b, "points")) || 0;
+      const agentA = getValue(a, "agent").toLowerCase();
+      const agentB = getValue(b, "agent").toLowerCase();
+
+      switch (sortBy) {
+        case "oldest":
+          return dateA - dateB;
+        case "points-high":
+          return pointsB - pointsA;
+        case "points-low":
+          return pointsA - pointsB;
+        case "agent":
+          return agentA.localeCompare(agentB);
+        case "newest":
+        default:
+          return dateB - dateA;
+      }
+    });
+
+    rows.forEach(function (row) {
+      row.hidden = true;
+    });
+
+    filteredRows.forEach(function (row) {
+      row.hidden = false;
+      tableBody.insertBefore(row, noActivitiesRow || noResultsRow);
+    });
+
+    if (noActivitiesRow) {
+      noActivitiesRow.hidden = rows.length !== 0;
+    }
+
+    if (noResultsRow) {
+      noResultsRow.hidden = rows.length === 0 || filteredRows.length !== 0;
+    }
+
+    resultCount.innerHTML =
+      "Showing <strong>" + filteredRows.length +
+      "</strong> of <strong>" + rows.length +
+      "</strong> records on this page";
+
+    exportButton.disabled = filteredRows.length === 0;
+    exportButton.style.opacity = filteredRows.length === 0 ? ".55" : "1";
+    exportButton.style.cursor = filteredRows.length === 0 ? "not-allowed" : "pointer";
+
+    return filteredRows;
+  }
+
+  function escapeCsv(value) {
+    const text = String(value == null ? "" : value);
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function exportCsv() {
+    const visibleRows = applyActivityFilters();
+
+    if (!visibleRows.length) return;
+
+    const headers = [
+      "Date & Time",
+      "Agent",
+      "Activity Type",
+      "Points",
+      "Note"
+    ];
+
+    const csvRows = [headers.map(escapeCsv).join(",")];
+
+    visibleRows.forEach(function (row) {
+      csvRows.push([
+        getValue(row, "dateLabel"),
+        getValue(row, "agentLabel"),
+        getValue(row, "typeLabel"),
+        getValue(row, "points"),
+        getValue(row, "noteLabel")
+      ].map(escapeCsv).join(","));
+    });
+
+    // UTF-8 BOM helps spreadsheet software recognize text encoding.
+    const csvContent = "\uFEFF" + csvRows.join("\r\n");
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "gyansify-activity-history-" +
+      new Date().toISOString().slice(0, 10) + ".csv";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  }
+
+  searchInput.addEventListener("input", applyActivityFilters);
+  typeFilter.addEventListener("change", applyActivityFilters);
+  sortSelect.addEventListener("change", applyActivityFilters);
+  exportButton.addEventListener("click", exportCsv);
+
+  resetButton.addEventListener("click", function () {
+    searchInput.value = "";
+    typeFilter.value = "";
+    sortSelect.value = "newest";
+    applyActivityFilters();
+    searchInput.focus();
+  });
+
+  printButton.addEventListener("click", function () {
+    window.print();
+  });
+
+  tableBody.addEventListener("submit", function (event) {
+    const form = event.target.closest(".delete-activity-form");
+
+    if (!form) return;
+
+    const confirmed = window.confirm(
+      "Delete this activity record?\n\nThis may change performance rankings. This action cannot be undone."
+    );
+
+    if (!confirmed) {
+      event.preventDefault();
+    }
+  });
+
+  applyActivityFilters();
+})();
+</script>
+
+</body>
+</html>

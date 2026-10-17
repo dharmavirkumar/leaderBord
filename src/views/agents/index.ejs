@@ -1,0 +1,21 @@
+<%- include("../partials/head", { title }) %>
+<%- include("../partials/nav") %>
+<main class="page-wrap">
+  <%- include("../partials/flash") %>
+  <header class="page-heading"><div><p class="eyebrow">TEAM DIRECTORY</p><h1>Agents</h1><p class="muted">Manage calling and lead generation team members.</p></div><a class="btn btn-primary" href="/agents/new">＋ Add agent</a></header>
+  <section class="panel">
+    <div class="section-heading"><div><h2>All agents</h2><p class="muted"><%= agents.length %> total members</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Agent</th><th>Phone</th><th>Team</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      <% agents.forEach(agent => { %><tr>
+        <td><div class="agent-cell"><span class="mini-avatar"><%= agent.name.slice(0,1).toUpperCase() %></span><span><strong><%= agent.name %></strong><small><%= agent.email %></small></span></div></td>
+        <td><%= agent.phone || '—' %></td><td><%= agent.team %></td>
+        <td><span class="status <%= agent.active ? 'status-active' : 'status-inactive' %>"><%= agent.active ? 'Active' : 'Inactive' %></span></td>
+        <td><div class="row-actions"><a class="btn btn-small btn-light" href="/agents/<%= agent._id %>/edit">Edit</a><form method="post" action="/agents/<%= agent._id %>/delete" onsubmit="return confirm('Delete this agent and their activity history? This cannot be undone.');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-small btn-danger-light" type="submit" <%= agent.active ? "" : "disabled" %>><%= agent.active ? "Archive" : "Archived" %></button></form></div></td>
+      </tr><% }) %>
+      <% if (!agents.length) { %><tr><td colspan="5" class="table-empty">No agents yet. Add your first team member.</td></tr><% } %>
+    </tbody></table></div>
+  </section>
+  <footer class="footer">Tip: deactivate a member to keep them in the directory without including them in future activity entry.</footer>
+</main>
+</body>
+</html>

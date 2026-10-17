@@ -1,0 +1,19 @@
+<%- include("partials/head", { title }) %>
+<main class="login-shell">
+  <section class="login-card">
+    <a class="brand login-brand" href="/login"><span class="brand-mark">G</span><span>Gyansify <small>TEAM PERFORMANCE</small></span></a>
+    <p class="eyebrow">ADMIN ACCESS</p>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to manage your lead generation team.</p>
+    <% if (errors.length) { %><div class="alert alert-error"><% errors.forEach(e => { %><p><%= e %></p><% }) %></div><% } %>
+    <form method="post" action="/login" class="form-stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Email address<input type="email" name="email" required maxlength="254" autocomplete="username" autofocus></label>
+      <label>Password<input type="password" name="password" required maxlength="200" autocomplete="current-password"></label>
+      <button class="btn btn-primary btn-full" type="submit">Sign in <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="tiny muted">Authorized administrators only.</p>
+  </section>
+</main>
+</body>
+</html>
