@@ -1,5 +1,5 @@
 <%- include("partials/head", {
-  title: title || "Performance Center | Gyansify"
+  title: typeof title !== "undefined" && title ? title : "Performance Center | Gyansify"
 }) %>
 
 <style>
@@ -729,11 +729,11 @@ h2 {
 <%- include("partials/nav") %>
 
 <%
-  const rows = Array.isArray(leaderboard) ? leaderboard : [];
-  const topThree = Array.isArray(podium) ? podium : [];
-  const activities = Array.isArray(recentActivities) ? recentActivities : [];
+  const rows = typeof leaderboard !== "undefined" && Array.isArray(leaderboard) ? leaderboard : [];
+  const topThree = typeof podium !== "undefined" && Array.isArray(podium) ? podium : [];
+  const activities = typeof recentActivities !== "undefined" && Array.isArray(recentActivities) ? recentActivities : [];
 
-  const currentPeriod = ["daily", "weekly", "monthly"].includes(period)
+  const currentPeriod = ["daily", "weekly", "monthly"].includes(typeof period !== "undefined" ? period : "daily")
     ? period
     : "daily";
 
@@ -854,7 +854,7 @@ h2 {
         <nav class="period-switch" aria-label="Leaderboard period">
           <% [["daily","Today"],["weekly","Weekly"],["monthly","Monthly"]].forEach(([value,label]) => { %>
             <a
-              href="/dashboard?period=<%= value %>"
+              href="/?period=<%= value %>"
               class="period-link <%= currentPeriod === value ? 'active' : '' %>"
               <%= currentPeriod === value ? 'aria-current="page"' : '' %>
             ><%= label %></a>

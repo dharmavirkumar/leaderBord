@@ -1,44 +1,78 @@
 
 "use strict";
 
+require("dotenv").config();
+
 const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const compression = require("compression");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+const mongoose = require("mongoose");
 const path = require("path");
+
+/* =========================================================
+   1. APPLICATION CONFIGURATION
+========================================================= */
 
 const app = express();
 
-/* =========================================================
-   1. ENVIRONMENT & TRUST PROXY
-========================================================= */
-
-const isProduction = process.env.NODE_ENV === "production";
-const PORT = process.env.PORT || 3000;
-
-// Render reverse proxy.
-// Verify the trusted proxy hop count for your deployment.
-if (isProduction) {
-  app.set("trust proxy", 1);
-} else {
-  app.set("trust proxy", false);
-}
+const PORT = Number(process.env.PORT) || 3000;
+const NODE_ENV = process.env.NODE_ENV || "development";
+const isProduction = NODE_ENV === "production";
 
 app.disable("x-powered-by");
 
+// Render ke standard single-proxy setup ke liye.
+// Agar tumhare network mein proxy hops alag hain, verify karo.
+app.set("trust proxy", isProduction ? 1 : false);
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "src", "views"));
+
 /* =========================================================
-   2. SECURITY HEADERS
+   2. REQUIRED ENVIRONMENT VARIABLES
 ========================================================= */
 
+const requiredEnv = ["MONGODB_URI", "SESSION_SECRET"];
+
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    console.error(`[CONFIG ERROR] Missing environment variable: ${key}`);
+    process.exit(1);
+  }
+}
+
+if (isProduction && process.env.SESSION_SECRET.length < 32) {
+  console.error(
+    "[CONFIG ERROR] SESSION_SECRET must be at least 32 characters."
+  );
+  process.exit(1);
+}
+
+/* =========================================================
+   3. SECURITY HEADERS
+========================================================= */
+
+// CSP is temporarily disabled for compatibility with existing
+// EJS pages that may use inline CSS/JS. Configure CSP separately
+// before enabling it, so existing pages do not break.
 app.use(
   helmet({
-    // Enable a stricter CSP after checking your EJS templates,
-    // inline scripts/styles, and external assets.
     contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
   })
 );
 
 /* =========================================================
-   3. REQUEST PARSING
+   4. COMPRESSION
+========================================================= */
+
+app.use(compression());
+
+/* =========================================================
+   5. REQUEST PARSING
 ========================================================= */
 
 app.use(express.json({ limit: "1mb" }));
@@ -51,19 +85,25 @@ app.use(
 );
 
 /* =========================================================
-   4. STATIC FILES
+   6. STATIC ASSETS
 ========================================================= */
 
 app.use(
   express.static(path.join(__dirname, "public"), {
     index: false,
-    maxAge: isProduction ? "7d" : 0,
     etag: true,
+    maxAge: isProduction ? "7d" : 0,
+    setHeaders(res, filePath) {
+      // HTML files should not be cached for a long time.
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      }
+    },
   })
 );
 
 /* =========================================================
-   5. GENERAL RATE LIMITER
+   7. RATE LIMITING
 ========================================================= */
 
 const generalLimiter = rateLimit({
@@ -75,131 +115,263 @@ const generalLimiter = rateLimit({
     success: false,
     message: "Too many requests. Please try again later.",
   },
+  handler(req, res, next, options) {
+    res.status(options.statusCode).json(options.message);
+  },
 });
 
 app.use(generalLimiter);
 
+// Optional stricter limiter for login endpoints.
+// Apply this directly to your actual login POST route.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many login attempts. Please try again later.",
+  },
+});
+
 /* =========================================================
-   6. HEALTH CHECK
+   8. MONGODB SESSION STORE
 ========================================================= */
 
-app.get("/health", (req, res) => {
+app.use(
+  session({
+    name: "gyansify.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+      collectionName: "sessions",
+      ttl: 14 * 24 * 60 * 60,
+      autoRemove: "native",
+    }),
+    cookie: {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      maxAge: 14 * 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
+/* =========================================================
+   9. TEMPLATE LOCALS
+========================================================= */
+
+app.locals.appName = "Gyansify Leaderboard";
+app.locals.currentYear = new Date().getFullYear();
+
+/* =========================================================
+   10. HEALTH CHECKS
+========================================================= */
+
+// Liveness: confirms that the Node process is responding.
+app.get("/health/live", (req, res) => {
   res.status(200).json({
     success: true,
-    status: "ok",
+    status: "alive",
+    service: "Gyansify Leaderboard",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Readiness: confirms MongoDB is connected too.
+app.get("/health/ready", (req, res) => {
+  const databaseReady = mongoose.connection.readyState === 1;
+
+  res.status(databaseReady ? 200 : 503).json({
+    success: databaseReady,
+    status: databaseReady ? "ready" : "not_ready",
+    database: databaseReady ? "connected" : "disconnected",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Keep compatibility with the existing /health endpoint.
+app.get("/health", (req, res) => {
+  const databaseReady = mongoose.connection.readyState === 1;
+
+  res.status(databaseReady ? 200 : 503).json({
+    success: databaseReady,
+    status: databaseReady ? "ok" : "database_unavailable",
     service: "Gyansify Leaderboard",
     timestamp: new Date().toISOString(),
   });
 });
 
 /* =========================================================
-   7. REGISTER YOUR EXISTING MIDDLEWARE & ROUTES
+   11. ROUTES
 ========================================================= */
 
-// Preserve your existing EJS setup, session middleware,
-// flash messages, authentication middleware and MongoDB logic.
-//
-// Example only — use the actual paths and exports:
-//
-// app.set("view engine", "ejs");
-// app.set("views", path.join(__dirname, "views"));
-// app.use(sessionMiddleware);
-// app.use("/", require("./routes/index"));
-// app.use("/agents", require("./routes/agents"));
-// app.use("/activities", require("./routes/activities"));
+// Keep your existing route files and exports.
+// Middleware order matters: session must run before routes.
+
+
+app.use("/", require("./src/routes/dashboard"));
+
+app.use("/agents", require("./src/routes/agents"));
+app.use("/activities", require("./src/routes/activities"));
+
+// If you use connect-flash, install it and register it AFTER
+// session middleware but BEFORE routes that read flash messages.
+// Example:
+// const flash = require("connect-flash");
+// app.use(flash());
 
 /* =========================================================
-   8. 404 HANDLER
+   12. 404 HANDLER
 ========================================================= */
 
 app.use((req, res, next) => {
-  res.status(404);
-
-  if (req.accepts("html")) {
-    return res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>404 - Page Not Found | Gyansify</title>
-        </head>
-        <body style="font-family:Arial,sans-serif;padding:40px;text-align:center">
-          <h1>404 - Page Not Found</h1>
-          <p>The requested page could not be found.</p>
-          <a href="/">Back to Home</a>
-        </body>
-      </html>
-    `);
-  }
-
-  return res.json({
-    success: false,
-    message: "Route not found",
-  });
+  const error = new Error("Page not found");
+  error.status = 404;
+  next(error);
 });
 
 /* =========================================================
-   9. CENTRAL ERROR HANDLER
+   13. CENTRAL ERROR HANDLER
 ========================================================= */
 
+// Express error middleware must have four parameters.
 app.use((err, req, res, next) => {
-  console.error("[Application Error]", {
-    message: err.message,
-    method: req.method,
-    path: req.path,
-  });
+  const status =
+    Number.isInteger(err.status) &&
+    err.status >= 400 &&
+    err.status < 600
+      ? err.status
+      : 500;
+
+  if (status >= 500) {
+    console.error("[SERVER ERROR]", {
+      message: err.message,
+      method: req.method,
+      path: req.originalUrl,
+      // Do not log cookies, passwords, session IDs or secrets.
+    });
+  }
 
   if (res.headersSent) {
     return next(err);
   }
 
-  const statusCode =
-    Number.isInteger(err.statusCode) &&
-    err.statusCode >= 400 &&
-    err.statusCode < 600
-      ? err.statusCode
-      : 500;
-
-  res.status(statusCode);
+  res.status(status);
 
   if (req.accepts("html")) {
-    return res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>${statusCode} - Gyansify</title>
-        </head>
-        <body style="font-family:Arial,sans-serif;padding:40px;text-align:center">
-          <h1>${statusCode === 500 ? "Something went wrong" : "Request Error"}</h1>
-          <p>Please try again later.</p>
-          <a href="/">Back to Home</a>
-        </body>
-      </html>
-    `);
+    return res.render(
+      "error",
+      {
+        title: status === 404 ? "Page Not Found" : "Server Error",
+        status,
+        message:
+          status === 404
+            ? "The page you are looking for could not be found."
+            : "Something went wrong. Please try again later.",
+      },
+      (renderError, html) => {
+        if (!renderError) {
+          return res.send(html);
+        }
+
+        // Fallback when views/error.ejs is not yet created.
+        return res.send(
+          status === 404
+            ? "<h1>404 - Page Not Found</h1><p><a href='/'>Back to home</a></p>"
+            : "<h1>500 - Internal Server Error</h1><p>Please try again later.</p>"
+        );
+      }
+    );
   }
 
-  return res.json({
+  return res.status(status).json({
     success: false,
     message:
-      statusCode === 500
-        ? "Internal server error"
-        : err.message,
+      status === 404
+        ? "Route not found"
+        : "Internal server error",
   });
 });
 
 /* =========================================================
-   10. START SERVER
+   14. START AFTER MONGODB CONNECTS
 ========================================================= */
 
-if (require.main === module) {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(
-      `Gyansify Leaderboard running on port ${PORT}`
-    );
-  });
+let server;
+
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 0,
+    });
+
+    console.log("[DATABASE] MongoDB connected");
+
+    server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[SERVER] Gyansify Leaderboard listening on ${PORT}`);
+      console.log(`[SERVER] Environment: ${NODE_ENV}`);
+    });
+  } catch (error) {
+    console.error("[STARTUP ERROR] Unable to start application:", error.message);
+    process.exit(1);
+  }
 }
 
-module.exports = app;
+/* =========================================================
+   15. GRACEFUL SHUTDOWN
+========================================================= */
+
+let isShuttingDown = false;
+
+async function shutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log(`[SHUTDOWN] Received ${signal}`);
+
+  const forceExitTimer = setTimeout(() => {
+    console.error("[SHUTDOWN] Forced exit after timeout");
+    process.exit(1);
+  }, 10000);
+
+  forceExitTimer.unref();
+
+  try {
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) return reject(error);
+          resolve();
+        });
+      });
+    }
+
+    await mongoose.disconnect();
+
+    console.log("[SHUTDOWN] Server and database closed cleanly");
+    process.exit(0);
+  } catch (error) {
+    console.error("[SHUTDOWN ERROR]", error.message);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = {
+  app,
+  loginLimiter,
+  startServer,
+};

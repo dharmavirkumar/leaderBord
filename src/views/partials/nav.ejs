@@ -1,15 +1,72 @@
-<nav class="topbar">
-  <a class="brand" href="/dashboard"><span class="brand-mark">G</span><span>Gyansify <small>TEAM PERFORMANCE</small></span></a>
-  <% if (adminName) { %>
-    <div class="nav-actions">
-      <a class="<%= currentPath.startsWith('/dashboard') ? 'active' : '' %>" href="/dashboard">Dashboard</a>
-      <a class="<%= currentPath.startsWith('/agents') ? 'active' : '' %>" href="/agents">Agents</a>
-      <a class="<%= currentPath.startsWith('/activities') ? 'active' : '' %>" href="/activities">Activities</a>
-      <span class="admin-label"><%= adminName %></span>
-      <form method="post" action="/logout" class="inline-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button class="link-button" type="submit">Log out</button>
-      </form>
+<style>
+  .site-nav-wrap {
+    width: 100%;
+    padding: 12px 18px 0;
+  }
+  .site-nav {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 13px 17px;
+    border: 1px solid #e6eaf2;
+    border-radius: 15px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 5px 20px rgba(25,35,65,.035);
+  }
+  .site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #182033;
+    text-decoration: none;
+    font-weight: 850;
+    letter-spacing: -.3px;
+    white-space: nowrap;
+  }
+  .site-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    background: #5b4bdb;
+    color: #fff;
+    font-size: 16px;
+  }
+  .site-nav-links { display: flex; flex-wrap: wrap; gap: 6px; }
+  .site-nav-links a {
+    padding: 9px 12px;
+    border-radius: 9px;
+    color: #687287;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
+  }
+  .site-nav-links a:hover, .site-nav-links a[aria-current="page"] {
+    color: #5142c4;
+    background: #f0edff;
+  }
+  @media (max-width: 600px) {
+    .site-nav-wrap { padding: 10px 10px 0; }
+    .site-nav { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .site-nav-links { width: 100%; }
+    .site-nav-links a { padding: 8px 9px; }
+  }
+</style>
+<nav class="site-nav-wrap" aria-label="Main navigation">
+  <div class="site-nav">
+    <a class="site-brand" href="/" aria-label="Gyansify dashboard home">
+      <span class="site-brand-mark">G</span>
+      <span>Gyansify <span style="color:#5b4bdb">Leaderboard</span></span>
+    </a>
+    <div class="site-nav-links">
+      <a href="/" aria-current="page">Dashboard</a>
+      <a href="/agents">Agents</a>
+      <a href="/activities">Activities</a>
+      <a href="/activities/new">Record activity</a>
     </div>
-  <% } %>
+  </div>
 </nav>
