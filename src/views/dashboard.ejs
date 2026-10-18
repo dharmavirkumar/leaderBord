@@ -733,9 +733,14 @@ h2 {
   const topThree = typeof podium !== "undefined" && Array.isArray(podium) ? podium : [];
   const activities = typeof recentActivities !== "undefined" && Array.isArray(recentActivities) ? recentActivities : [];
 
-  const currentPeriod = ["daily", "weekly", "monthly"].includes(typeof period !== "undefined" ? period : "daily")
-    ? period
-    : "daily";
+  
+const requestedPeriod =
+  typeof period !== "undefined" ? period : "daily";
+
+const currentPeriod = ["daily", "weekly", "monthly"].includes(requestedPeriod)
+  ? requestedPeriod
+  : "daily";
+
 
   const safeNumber = value => {
     const number = Number(value);
@@ -814,7 +819,9 @@ h2 {
           <span>Total agents</span>
           <span class="metric-icon">♙</span>
         </div>
-        <p class="metric-value"><%= formatted(agentsCount) %></p>
+        <p class="metric-value">
+  <%= formatted(typeof agentsCount !== "undefined" ? agentsCount : 0) %>
+</p>
         <p class="metric-foot">
           <span class="status-dot"></span>
           <%= formatted(activeCount) %> active agents
@@ -826,7 +833,9 @@ h2 {
           <span>Points earned</span>
           <span class="metric-icon">↗</span>
         </div>
-        <p class="metric-value"><%= formatted(totalPoints) %></p>
+        <p class="metric-value">
+  <%= formatted(typeof totalPoints !== "undefined" ? totalPoints : 0) %>
+</p>
         <p class="metric-foot"><%= periodLabel %> performance</p>
       </article>
 
@@ -835,7 +844,10 @@ h2 {
           <span>Ranked agents</span>
           <span class="metric-icon">🏆</span>
         </div>
-        <p class="metric-value"><%= formatted(rows.length) %></p>
+       <p class="metric-foot">
+  <span class="status-dot"></span>
+  <%= formatted(typeof activeCount !== "undefined" ? activeCount : 0) %> active agents
+</p>
         <p class="metric-foot">Agents with recorded points this period</p>
       </article>
 

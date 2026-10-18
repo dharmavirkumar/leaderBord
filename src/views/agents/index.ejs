@@ -1,21 +1,969 @@
+
 <%- include("../partials/head", { title }) %>
 <%- include("../partials/nav") %>
-<main class="page-wrap">
-  <%- include("../partials/flash") %>
-  <header class="page-heading"><div><p class="eyebrow">TEAM DIRECTORY</p><h1>Agents</h1><p class="muted">Manage calling and lead generation team members.</p></div><a class="btn btn-primary" href="/agents/new">＋ Add agent</a></header>
-  <section class="panel">
-    <div class="section-heading"><div><h2>All agents</h2><p class="muted"><%= agents.length %> total members</p></div></div>
-    <div class="table-wrap"><table><thead><tr><th>Agent</th><th>Phone</th><th>Team</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      <% agents.forEach(agent => { %><tr>
-        <td><div class="agent-cell"><span class="mini-avatar"><%= agent.name.slice(0,1).toUpperCase() %></span><span><strong><%= agent.name %></strong><small><%= agent.email %></small></span></div></td>
-        <td><%= agent.phone || '—' %></td><td><%= agent.team %></td>
-        <td><span class="status <%= agent.active ? 'status-active' : 'status-inactive' %>"><%= agent.active ? 'Active' : 'Inactive' %></span></td>
-        <td><div class="row-actions"><a class="btn btn-small btn-light" href="/agents/<%= agent._id %>/edit">Edit</a><form method="post" action="/agents/<%= agent._id %>/delete" onsubmit="return confirm('Delete this agent and their activity history? This cannot be undone.');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-small btn-danger-light" type="submit" <%= agent.active ? "" : "disabled" %>><%= agent.active ? "Archive" : "Archived" %></button></form></div></td>
-      </tr><% }) %>
-      <% if (!agents.length) { %><tr><td colspan="5" class="table-empty">No agents yet. Add your first team member.</td></tr><% } %>
-    </tbody></table></div>
+
+<%
+  const agentList = Array.isArray(agents) ? agents : [];
+  const searchValue = typeof search === "string" ? search : "";
+  const selectedStatus = typeof status === "string" ? status : "all";
+  const currentPage = Number(page) || 1;
+  const totalPages = Number(pages) || 1;
+  const totalAgents = Number.isFinite(Number(total)) ? Number(total) : agentList.length;
+  const activeAgents = Number.isFinite(Number(activeCount))
+    ? Number(activeCount)
+    : agentList.filter(a => a.active).length;
+  const inactiveAgents = Number.isFinite(Number(inactiveCount))
+    ? Number(inactiveCount)
+    : agentList.filter(a => !a.active).length;
+  const token = typeof csrfToken !== "undefined" ? csrfToken : "";
+  const flashMessage = typeof flash !== "undefined" ? flash : null;
+%>
+
+<style>
+  .agents-page {
+    --ag-primary: #4f46e5;
+    --ag-primary-dark: #3730a3;
+    --ag-border: #e2e8f0;
+    --ag-muted: #64748b;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 30px 24px 50px;
+  }
+
+  .ag-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 23px;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .ag-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ag-breadcrumb a:hover {
+    color: var(--ag-primary);
+  }
+
+  .ag-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 27px;
+  }
+
+  .ag-eyebrow {
+    margin: 0 0 10px;
+    color: var(--ag-primary);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  }
+
+  .ag-hero h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(28px, 3vw, 37px);
+    font-weight: 850;
+    letter-spacing: -1px;
+  }
+
+  .ag-hero-description {
+    margin: 10px 0 0;
+    color: var(--ag-muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .ag-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .18s ease;
+  }
+
+  .ag-button-primary {
+    background: var(--ag-primary);
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, .16);
+  }
+
+  .ag-button-primary:hover {
+    background: var(--ag-primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .ag-button-light {
+    border-color: #dbe2ea;
+    background: white;
+    color: #475569;
+  }
+
+  .ag-button-light:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .ag-button-danger {
+    border-color: #fecaca;
+    background: #fff7f7;
+    color: #b91c1c;
+  }
+
+  .ag-button-danger:hover {
+    background: #fee2e2;
+  }
+
+  .ag-button-success {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+  }
+
+  .ag-button-success:hover {
+    background: #dcfce7;
+  }
+
+  .ag-button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+
+  .ag-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 17px;
+    margin-bottom: 25px;
+  }
+
+  .ag-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+    padding: 21px;
+    border: 1px solid var(--ag-border);
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, .025);
+  }
+
+  .ag-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 47px;
+    height: 47px;
+    border-radius: 13px;
+    font-size: 20px;
+  }
+
+  .ag-stat-icon.total {
+    background: #eef2ff;
+    color: #4f46e5;
+  }
+
+  .ag-stat-icon.active {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .ag-stat-icon.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .ag-stat-label {
+    margin: 0 0 5px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .ag-stat-value {
+    margin: 0;
+    color: #0f172a;
+    font-size: 27px;
+    font-weight: 850;
+    letter-spacing: -.7px;
+    overflow-wrap: anywhere;
+  }
+
+  .ag-stat-note {
+    margin: 4px 0 0;
+    color: #94a3b8;
+    font-size: 10px;
+  }
+
+  .ag-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .ag-alert.error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .ag-alert.info {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .ag-panel {
+    overflow: hidden;
+    border: 1px solid var(--ag-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .035);
+  }
+
+  .ag-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 23px 24px;
+    border-bottom: 1px solid #edf0f5;
+  }
+
+  .ag-panel-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 850;
+  }
+
+  .ag-panel-header p {
+    margin: 6px 0 0;
+    color: var(--ag-muted);
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .ag-total-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid #e0e7ff;
+    border-radius: 99px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .ag-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex-wrap: wrap;
+    padding: 17px 24px;
+    border-bottom: 1px solid #edf0f5;
+    background: #fcfdff;
+  }
+
+  .ag-search {
+    position: relative;
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  .ag-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    color: #94a3b8;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .ag-search input,
+  .ag-filter-bar select {
+    width: 100%;
+    min-height: 41px;
+    border: 1px solid #dbe2ea;
+    border-radius: 9px;
+    outline: none;
+    background: white;
+    color: #334155;
+    font-family: inherit;
+    font-size: 12px;
+  }
+
+  .ag-search input {
+    padding: 10px 13px 10px 38px;
+  }
+
+  .ag-filter-bar select {
+    width: auto;
+    min-width: 145px;
+    padding: 10px 32px 10px 12px;
+  }
+
+  .ag-search input:focus,
+  .ag-filter-bar select:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+  }
+
+  .ag-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .ag-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .ag-table th {
+    padding: 14px 19px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .65px;
+    text-transform: uppercase;
+  }
+
+  .ag-table td {
+    padding: 16px 19px;
+    border-top: 1px solid #edf0f5;
+    color: #475569;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  .ag-table tbody tr {
+    transition: background .15s ease;
+  }
+
+  .ag-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  .ag-agent-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 210px;
+  }
+
+  .ag-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #e0e7ff;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #eef2ff, #e0e7ff);
+    color: #4338ca;
+    font-size: 14px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .ag-agent-name {
+    display: block;
+    max-width: 220px;
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+  }
+
+  .ag-agent-email {
+    display: block;
+    max-width: 220px;
+    margin-top: 5px;
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 10px;
+    text-overflow: ellipsis;
+  }
+
+  .ag-team-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 750;
+  }
+
+  .ag-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .ag-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .ag-status.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .ag-status.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .ag-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+
+  .ag-action-form {
+    display: inline-flex;
+    margin: 0;
+  }
+
+  .ag-action-button {
+    min-height: 32px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+  }
+
+  .ag-empty {
+    padding: 55px 20px !important;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .ag-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 15px;
+    border-radius: 17px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 25px;
+  }
+
+  .ag-empty h3 {
+    margin: 0 0 8px;
+    color: #1e293b;
+    font-size: 15px;
+  }
+
+  .ag-empty p {
+    margin: 0 0 18px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .ag-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 17px 24px;
+    border-top: 1px solid #edf0f5;
+  }
+
+  .ag-pagination-info {
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  .ag-pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .ag-page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .ag-page-link:hover {
+    border-color: #c7d2fe;
+    color: #4338ca;
+  }
+
+  .ag-page-link.current {
+    border-color: var(--ag-primary);
+    background: var(--ag-primary);
+    color: white;
+  }
+
+  .ag-page-link.disabled {
+    opacity: .45;
+    pointer-events: none;
+  }
+
+  .ag-footer-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 19px;
+    padding: 14px 16px;
+    border: 1px solid #dbeafe;
+    border-radius: 11px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 900px) {
+    .ag-stats {
+      gap: 11px;
+    }
+
+    .ag-stat-card {
+      padding: 15px;
+      gap: 10px;
+    }
+
+    .ag-stat-icon {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .agents-page {
+      padding: 22px 14px 36px;
+    }
+
+    .ag-hero {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .ag-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .ag-stat-card {
+      padding: 16px;
+    }
+
+    .ag-stat-value {
+      font-size: 24px;
+    }
+
+    .ag-panel-header,
+    .ag-filter-bar {
+      padding: 17px;
+    }
+
+    .ag-filter-bar {
+      align-items: stretch;
+    }
+
+    .ag-search {
+      flex-basis: 100%;
+    }
+
+    .ag-filter-bar select {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ag-filter-bar .ag-button {
+      flex: 1;
+    }
+
+    .ag-pagination {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 17px;
+    }
+
+    .ag-pagination-actions {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
+<main class="page-wrap agents-page">
+
+  <nav class="ag-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Dashboard</a>
+    <span aria-hidden="true">/</span>
+    <span>Team Management</span>
+    <span aria-hidden="true">/</span>
+    <span>Agents</span>
+  </nav>
+
+  <header class="ag-hero">
+    <div>
+      <p class="ag-eyebrow">GYANSIFY · TEAM DIRECTORY</p>
+      <h1>Agent Management</h1>
+      <p class="ag-hero-description">
+        Manage your calling team, maintain agent information and organize team activity.
+      </p>
+    </div>
+
+    <a class="ag-button ag-button-primary" href="/agents/new">
+      <span aria-hidden="true">＋</span>
+      Add new agent
+    </a>
+  </header>
+
+  <%
+  const pageFlash =
+    typeof flash !== "undefined" && flash
+      ? flash
+      : null;
+%>
+
+<% if (pageFlash && pageFlash.message) { %>
+  <div
+    class="ag-alert <%= pageFlash.type === 'error' ? 'error' : pageFlash.type === 'info' ? 'info' : '' %>"
+    role="status"
+  >
+    <%= pageFlash.message %>
+  </div>
+<% } %>
+
+  <section class="ag-stats" aria-label="Agent statistics">
+
+    <article class="ag-stat-card">
+      <div class="ag-stat-icon total" aria-hidden="true">♙</div>
+      <div>
+        <p class="ag-stat-label">Total agents</p>
+        <p class="ag-stat-value"><%= totalAgents.toLocaleString("en-IN") %></p>
+        <p class="ag-stat-note">Matching current filters</p>
+      </div>
+    </article>
+
+    <article class="ag-stat-card">
+      <div class="ag-stat-icon active" aria-hidden="true">✓</div>
+      <div>
+        <p class="ag-stat-label">Active members</p>
+        <p class="ag-stat-value"><%= activeAgents.toLocaleString("en-IN") %></p>
+        <p class="ag-stat-note">Across all teams</p>
+      </div>
+    </article>
+
+    <article class="ag-stat-card">
+      <div class="ag-stat-icon inactive" aria-hidden="true">◷</div>
+      <div>
+        <p class="ag-stat-label">Inactive members</p>
+        <p class="ag-stat-value"><%= inactiveAgents.toLocaleString("en-IN") %></p>
+        <p class="ag-stat-note">Archived or deactivated agents</p>
+      </div>
+    </article>
+
   </section>
-  <footer class="footer">Tip: deactivate a member to keep them in the directory without including them in future activity entry.</footer>
+
+  <section class="ag-panel">
+
+    <header class="ag-panel-header">
+      <div>
+        <h2>Team directory</h2>
+        <p>Search, filter and manage your registered agents.</p>
+      </div>
+
+      <span class="ag-total-pill">
+        <span aria-hidden="true">●</span>
+        <%= totalAgents %> results
+      </span>
+    </header>
+
+    <form class="ag-filter-bar" method="get" action="/agents">
+
+      <div class="ag-search">
+        <span class="ag-search-icon" aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          name="search"
+          placeholder="Search name, email, phone or team..."
+          value="<%= searchValue %>"
+          aria-label="Search agents"
+          maxlength="100"
+        >
+      </div>
+
+      <select name="status" aria-label="Filter by agent status">
+        <option value="all" <%= selectedStatus === "all" ? "selected" : "" %>>
+          All statuses
+        </option>
+        <option value="active" <%= selectedStatus === "active" ? "selected" : "" %>>
+          Active only
+        </option>
+        <option value="inactive" <%= selectedStatus === "inactive" ? "selected" : "" %>>
+          Inactive only
+        </option>
+      </select>
+
+      <button class="ag-button ag-button-primary" type="submit">
+        Apply filters
+      </button>
+
+      <% if (searchValue || selectedStatus !== "all") { %>
+        <a class="ag-button ag-button-light" href="/agents">
+          Clear
+        </a>
+      <% } %>
+
+    </form>
+
+    <div class="ag-table-wrap">
+      <table class="ag-table">
+        <thead>
+          <tr>
+            <th scope="col">Agent</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Team</th>
+            <th scope="col">Status</th>
+            <th scope="col" style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <% agentList.forEach(function(agent) { %>
+            <tr>
+              <td>
+                <div class="ag-agent-cell">
+                  <span class="ag-avatar" aria-hidden="true">
+                    <%= String(agent.name || "?").trim().charAt(0).toUpperCase() %>
+                  </span>
+
+                  <span>
+                    <strong class="ag-agent-name"><%= agent.name || "Unnamed agent" %></strong>
+                    <small class="ag-agent-email"><%= agent.email || "No email provided" %></small>
+                  </span>
+                </div>
+              </td>
+
+              <td><%= agent.phone || "—" %></td>
+
+              <td>
+                <span class="ag-team-pill"><%= agent.team || "Unassigned" %></span>
+              </td>
+
+              <td>
+                <span class="ag-status <%= agent.active ? 'active' : 'inactive' %>">
+                  <span class="ag-status-dot" aria-hidden="true"></span>
+                  <%= agent.active ? "Active" : "Inactive" %>
+                </span>
+              </td>
+
+              <td>
+                <div class="ag-actions">
+
+                  <a
+                    class="ag-button ag-button-light ag-action-button"
+                    href="/agents/<%= agent._id %>/edit"
+                    aria-label="Edit <%= agent.name %>"
+                  >
+                    Edit
+                  </a>
+
+                  <% if (agent.active) { %>
+                    <form
+                      class="ag-action-form"
+                      method="post"
+                      action="/agents/<%= agent._id %>/delete"
+                      data-confirm-message="Archive <%= String(agent.name || 'this agent').replace(/["'<>]/g, '') %>? Historical activity records will be preserved."
+                    >
+                      <input type="hidden" name="_csrf" value="<%= token %>">
+
+                      <button
+                        class="ag-button ag-button-danger ag-action-button"
+                        type="submit"
+                      >
+                        Archive
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <form
+                      class="ag-action-form"
+                      method="post"
+                      action="/agents/<%= agent._id %>/activate"
+                      data-confirm-message="Reactivate <%= String(agent.name || 'this agent').replace(/["'<>]/g, '') %>?"
+                    >
+                      <input type="hidden" name="_csrf" value="<%= token %>">
+
+                      <button
+                        class="ag-button ag-button-success ag-action-button"
+                        type="submit"
+                      >
+                        Reactivate
+                      </button>
+                    </form>
+                  <% } %>
+
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+
+          <% if (!agentList.length) { %>
+            <tr>
+              <td colspan="5" class="ag-empty">
+                <div class="ag-empty-icon" aria-hidden="true">♙</div>
+
+                <h3>
+                  <%= searchValue || selectedStatus !== "all"
+                    ? "No matching agents found"
+                    : "Your team directory is empty" %>
+                </h3>
+
+                <p>
+                  <%= searchValue || selectedStatus !== "all"
+                    ? "Try changing your search terms or status filter."
+                    : "Add your first agent to start organizing your team." %>
+                </p>
+
+                <% if (searchValue || selectedStatus !== "all") { %>
+                  <a class="ag-button ag-button-light" href="/agents">Clear filters</a>
+                <% } else { %>
+                  <a class="ag-button ag-button-primary" href="/agents/new">＋ Add first agent</a>
+                <% } %>
+              </td>
+            </tr>
+          <% } %>
+
+        </tbody>
+      </table>
+    </div>
+
+    <% if (totalPages > 1) { %>
+      <footer class="ag-pagination">
+
+        <div class="ag-pagination-info">
+          Page <strong><%= currentPage %></strong> of
+          <strong><%= totalPages %></strong>
+          · <%= totalAgents %> matching agents
+        </div>
+
+        <nav class="ag-pagination-actions" aria-label="Agent pagination">
+
+          <a
+            class="ag-page-link <%= currentPage <= 1 ? 'disabled' : '' %>"
+            href="/agents?page=<%= Math.max(1, currentPage - 1) %>&search=<%= encodeURIComponent(searchValue) %>&status=<%= encodeURIComponent(selectedStatus) %>"
+            aria-label="Previous page"
+            <%= currentPage <= 1 ? 'aria-disabled="true"' : '' %>
+          >← Prev</a>
+
+          <% 
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+          %>
+
+          <% for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) { %>
+            <a
+              class="ag-page-link <%= pageNumber === currentPage ? 'current' : '' %>"
+              href="/agents?page=<%= pageNumber %>&search=<%= encodeURIComponent(searchValue) %>&status=<%= encodeURIComponent(selectedStatus) %>"
+              <%= pageNumber === currentPage ? 'aria-current="page"' : '' %>
+            ><%= pageNumber %></a>
+          <% } %>
+
+          <a
+            class="ag-page-link <%= currentPage >= totalPages ? 'disabled' : '' %>"
+            href="/agents?page=<%= Math.min(totalPages, currentPage + 1) %>&search=<%= encodeURIComponent(searchValue) %>&status=<%= encodeURIComponent(selectedStatus) %>"
+            aria-label="Next page"
+            <%= currentPage >= totalPages ? 'aria-disabled="true"' : '' %>
+          >Next →</a>
+
+        </nav>
+      </footer>
+    <% } %>
+
+  </section>
+
+  <aside class="ag-footer-note">
+    <span aria-hidden="true">ℹ</span>
+    <div>
+      <strong>Team management tip:</strong>
+      Archive agents who are no longer active instead of permanently deleting them.
+      This keeps historical activity records available for reporting.
+    </div>
+  </aside>
+
 </main>
+
+<script>
+(function () {
+  "use strict";
+
+  document.querySelectorAll("form[data-confirm-message]").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+      const message = form.getAttribute("data-confirm-message") || "Continue with this action?";
+
+      if (!window.confirm(message)) {
+        event.preventDefault();
+      }
+    });
+  });
+})();
+</script>
+
 </body>
 </html>

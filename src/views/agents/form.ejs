@@ -1,19 +1,977 @@
+
 <%- include("../partials/head", { title }) %>
 <%- include("../partials/nav") %>
-<main class="page-wrap narrow-wrap">
-  <p class="eyebrow">TEAM DIRECTORY</p><h1><%= isEdit ? 'Edit agent' : 'Add an agent' %></h1><p class="muted">Keep contact and team information up to date.</p>
-  <% if (errors.length) { %><div class="alert alert-error"><% errors.forEach(e => { %><p><%= e %></p><% }) %></div><% } %>
-  <section class="panel form-panel">
-    <form method="post" action="<%= isEdit ? '/agents/' + agent._id + '/edit' : '/agents' %>" class="form-stack">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <label>Full name<input name="name" required minlength="2" maxlength="80" value="<%= agent.name || '' %>" autocomplete="name"></label>
-      <label>Email address<input type="email" name="email" required maxlength="254" value="<%= agent.email || '' %>" autocomplete="email"></label>
-      <label>Phone number <span class="optional">(optional)</span><input name="phone" maxlength="25" value="<%= agent.phone || '' %>" autocomplete="tel"></label>
-      <label>Team<input name="team" required minlength="2" maxlength="60" value="<%= agent.team || 'Calling Team' %>"></label>
-      <label class="check-label"><input type="checkbox" name="active" <%= agent.active === false ? '' : 'checked' %>> Active agent</label>
-      <div class="form-actions"><a class="btn btn-light" href="/agents">Cancel</a><button class="btn btn-primary" type="submit"><%= isEdit ? 'Save changes' : 'Create agent' %></button></div>
-    </form>
-  </section>
+
+<%
+  const currentAgent = agent || {};
+  const formErrors = Array.isArray(errors) ? errors : [];
+  const editing = Boolean(isEdit);
+  const safeCsrfToken = typeof csrfToken !== "undefined" ? csrfToken : "";
+%>
+
+<style>
+  .agent-form-page {
+    --agent-primary: #4f46e5;
+    --agent-primary-dark: #3730a3;
+    --agent-border: #e2e8f0;
+    --agent-muted: #64748b;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 22px 60px;
+  }
+
+  .agent-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 24px;
+    color: var(--agent-muted);
+    font-size: 13px;
+  }
+
+  .agent-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .agent-breadcrumb a:hover {
+    color: var(--agent-primary);
+  }
+
+  .agent-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .agent-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    color: var(--agent-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.7px;
+    text-transform: uppercase;
+  }
+
+  .agent-hero h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(27px, 4vw, 37px);
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.2;
+  }
+
+  .agent-hero p {
+    max-width: 600px;
+    margin: 12px 0 0;
+    color: var(--agent-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .agent-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 11px 15px;
+    border: 1px solid var(--agent-border);
+    border-radius: 11px;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: .2s ease;
+  }
+
+  .agent-back-link:hover {
+    border-color: #c7d2fe;
+    color: var(--agent-primary);
+    transform: translateY(-1px);
+  }
+
+  .agent-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    align-items: start;
+    gap: 22px;
+  }
+
+  .agent-card {
+    overflow: hidden;
+    border: 1px solid var(--agent-border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, .045);
+  }
+
+  .agent-card-header {
+    padding: 23px 25px;
+    border-bottom: 1px solid #edf0f5;
+  }
+
+  .agent-card-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .agent-card-header p {
+    margin: 7px 0 0;
+    color: var(--agent-muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .agent-form {
+    padding: 25px;
+  }
+
+  .agent-section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 20px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+  }
+
+  .agent-section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: #eef2ff;
+    color: var(--agent-primary);
+    font-size: 12px;
+  }
+
+  .agent-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 17px;
+  }
+
+  .agent-field {
+    min-width: 0;
+  }
+
+  .agent-field.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .agent-field label,
+  .agent-field-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .agent-required {
+    color: #dc2626;
+  }
+
+  .agent-optional {
+    margin-left: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .agent-input-wrap {
+    position: relative;
+  }
+
+  .agent-input-icon {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 15px;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .agent-field input:not([type="checkbox"]),
+  .agent-field select {
+    display: block;
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 13px;
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+    outline: none;
+    background: #fff;
+    color: #0f172a;
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .agent-field .has-icon {
+    padding-left: 41px !important;
+  }
+
+  .agent-field input:focus,
+  .agent-field select:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, .11);
+  }
+
+  .agent-field input::placeholder {
+    color: #a0aabc;
+  }
+
+  .agent-field input[aria-invalid="true"],
+  .agent-field select[aria-invalid="true"] {
+    border-color: #ef4444;
+  }
+
+  .agent-field-help {
+    margin: 7px 0 0;
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .agent-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0 0 22px;
+    padding: 15px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fff7f7;
+    color: #991b1b;
+  }
+
+  .agent-alert-icon {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  .agent-alert strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+
+  .agent-alert ul {
+    margin: 0;
+    padding-left: 17px;
+    font-size: 12px;
+    line-height: 1.9;
+  }
+
+  .agent-divider {
+    height: 1px;
+    margin: 27px 0;
+    border: 0;
+    background: #edf0f5;
+  }
+
+  .agent-status-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+  }
+
+  .agent-status-title {
+    margin: 0;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  .agent-status-description {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .agent-switch {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 45px;
+    height: 25px;
+  }
+
+  .agent-switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .agent-switch-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 99px;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: background .2s;
+  }
+
+  .agent-switch-track::before {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .16);
+    content: "";
+    transition: transform .2s;
+  }
+
+  .agent-switch input:checked + .agent-switch-track {
+    background: #4f46e5;
+  }
+
+  .agent-switch input:checked + .agent-switch-track::before {
+    transform: translateX(20px);
+  }
+
+  .agent-switch input:focus-visible + .agent-switch-track {
+    outline: 3px solid #c7d2fe;
+    outline-offset: 3px;
+  }
+
+  .agent-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid #edf0f5;
+  }
+
+  .agent-footer-note {
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .agent-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .agent-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 43px;
+    padding: 11px 17px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .18s, background .18s, box-shadow .18s;
+  }
+
+  .agent-btn:disabled {
+    cursor: not-allowed;
+    opacity: .7;
+  }
+
+  .agent-btn-secondary {
+    border-color: #dbe2ea;
+    background: #fff;
+    color: #475569;
+  }
+
+  .agent-btn-secondary:hover {
+    background: #f8fafc;
+  }
+
+  .agent-btn-primary {
+    background: var(--agent-primary);
+    color: #fff;
+    box-shadow: 0 5px 12px rgba(79, 70, 229, .18);
+  }
+
+  .agent-btn-primary:hover {
+    background: var(--agent-primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .agent-sidebar {
+    display: grid;
+    gap: 18px;
+  }
+
+  .agent-profile-card {
+    padding: 25px 20px;
+    text-align: center;
+  }
+
+  .agent-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 15px;
+    border: 1px solid #c7d2fe;
+    border-radius: 22px;
+    background: linear-gradient(145deg, #eef2ff, #e0e7ff);
+    color: #4338ca;
+    font-size: 27px;
+    font-weight: 800;
+  }
+
+  .agent-profile-card h3 {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .agent-profile-card > p {
+    margin: 7px 0 14px;
+    overflow-wrap: anywhere;
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .agent-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 99px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .agent-status-badge.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .agent-info-card {
+    padding: 21px;
+  }
+
+  .agent-info-card h3 {
+    margin: 0 0 16px;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .agent-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-top: 15px;
+  }
+
+  .agent-tip:first-of-type {
+    margin-top: 0;
+  }
+
+  .agent-tip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 31px;
+    height: 31px;
+    border-radius: 9px;
+    background: #eef2ff;
+    font-size: 14px;
+  }
+
+  .agent-tip strong {
+    display: block;
+    margin: 1px 0 5px;
+    color: #334155;
+    font-size: 11px;
+  }
+
+  .agent-tip p {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .agent-security-note {
+    padding: 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 800px) {
+    .agent-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .agent-sidebar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .agent-profile-card {
+      grid-row: span 2;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .agent-form-page {
+      padding: 22px 14px 40px;
+    }
+
+    .agent-hero {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .agent-hero h1 {
+      letter-spacing: -.7px;
+    }
+
+    .agent-layout {
+      gap: 16px;
+    }
+
+    .agent-card-header,
+    .agent-form {
+      padding: 19px 16px;
+    }
+
+    .agent-fields {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 17px;
+    }
+
+    .agent-field.full-width {
+      grid-column: auto;
+    }
+
+    .agent-sidebar {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .agent-profile-card {
+      grid-row: auto;
+    }
+
+    .agent-form-footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .agent-actions {
+      width: 100%;
+    }
+
+    .agent-actions .agent-btn {
+      flex: 1;
+    }
+  }
+</style>
+
+<main class="page-wrap agent-form-page">
+
+  <nav class="agent-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Dashboard</a>
+    <span aria-hidden="true">/</span>
+    <a href="/agents">Team Directory</a>
+    <span aria-hidden="true">/</span>
+    <span><%= editing ? "Edit Agent" : "Add Agent" %></span>
+  </nav>
+
+  <header class="agent-hero">
+    <div>
+      <p class="agent-eyebrow">
+        <span aria-hidden="true">✦</span>
+        GYANSIFY · TEAM MANAGEMENT
+      </p>
+
+      <h1><%= editing ? "Edit agent details" : "Add a new agent" %></h1>
+
+      <p>
+        <%= editing
+          ? "Update this team member's information and keep your leaderboard records accurate."
+          : "Register a team member to organize your team and track activities and leaderboard performance." %>
+      </p>
+    </div>
+
+    <a class="agent-back-link" href="/agents">
+      <span aria-hidden="true">←</span>
+      Back to agents
+    </a>
+  </header>
+
+  <div class="agent-layout">
+
+    <section class="agent-card">
+
+      <header class="agent-card-header">
+        <h2><%= editing ? "Agent information" : "Agent profile details" %></h2>
+        <p>Fields marked with <span class="agent-required">*</span> are required.</p>
+      </header>
+
+      <form
+        class="agent-form"
+        id="agentForm"
+        method="post"
+        action="<%= editing ? '/agents/' + currentAgent._id + '/edit' : '/agents' %>"
+      >
+
+        <input
+          type="hidden"
+          name="_csrf"
+          value="<%= safeCsrfToken %>"
+        >
+
+        <% if (formErrors.length) { %>
+          <div class="agent-alert" role="alert" aria-live="assertive">
+            <span class="agent-alert-icon" aria-hidden="true">⚠</span>
+            <div>
+              <strong>Please review the following</strong>
+              <ul>
+                <% formErrors.forEach(function(error) { %>
+                  <li><%= error %></li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+        <% } %>
+
+        <h3 class="agent-section-label">
+          <span class="agent-section-number">01</span>
+          Personal information
+        </h3>
+
+        <div class="agent-fields">
+
+          <div class="agent-field full-width">
+            <label for="agentName">
+              Full name <span class="agent-required">*</span>
+            </label>
+
+            <div class="agent-input-wrap">
+              <span class="agent-input-icon" aria-hidden="true">♙</span>
+              <input
+                class="has-icon"
+                id="agentName"
+                name="name"
+                type="text"
+                placeholder="Enter agent's full name"
+                required
+                minlength="2"
+                maxlength="80"
+                autocomplete="name"
+                value="<%= currentAgent.name || '' %>"
+              >
+            </div>
+
+            <p class="agent-field-help">Use the name you want displayed in the team directory.</p>
+          </div>
+
+          <div class="agent-field">
+            <label for="agentEmail">
+              Email address <span class="agent-required">*</span>
+            </label>
+
+            <div class="agent-input-wrap">
+              <span class="agent-input-icon" aria-hidden="true">✉</span>
+              <input
+                class="has-icon"
+                id="agentEmail"
+                name="email"
+                type="email"
+                placeholder="name@example.com"
+                required
+                maxlength="254"
+                autocomplete="email"
+                value="<%= currentAgent.email || '' %>"
+              >
+            </div>
+
+            <p class="agent-field-help">Use a unique email address for each agent.</p>
+          </div>
+
+          <div class="agent-field">
+            <label for="agentPhone">
+              Phone number <span class="agent-optional">Optional</span>
+            </label>
+
+            <div class="agent-input-wrap">
+              <span class="agent-input-icon" aria-hidden="true">☎</span>
+              <input
+                class="has-icon"
+                id="agentPhone"
+                name="phone"
+                type="tel"
+                placeholder="Enter phone number"
+                maxlength="25"
+                autocomplete="tel"
+                value="<%= currentAgent.phone || '' %>"
+              >
+            </div>
+
+            <p class="agent-field-help">Include the country code if needed.</p>
+          </div>
+
+        </div>
+
+        <hr class="agent-divider">
+
+        <h3 class="agent-section-label">
+          <span class="agent-section-number">02</span>
+          Team assignment
+        </h3>
+
+        <div class="agent-fields">
+
+          <div class="agent-field full-width">
+            <label for="agentTeam">
+              Team name <span class="agent-required">*</span>
+            </label>
+
+            <div class="agent-input-wrap">
+              <span class="agent-input-icon" aria-hidden="true">♧</span>
+              <input
+                class="has-icon"
+                id="agentTeam"
+                name="team"
+                type="text"
+                placeholder="e.g. Calling Team"
+                required
+                minlength="2"
+                maxlength="60"
+                value="<%= currentAgent.team || 'Calling Team' %>"
+              >
+            </div>
+
+            <p class="agent-field-help">
+              Enter the department or team this agent belongs to.
+            </p>
+          </div>
+
+        </div>
+
+        <hr class="agent-divider">
+
+        <h3 class="agent-section-label">
+          <span class="agent-section-number">03</span>
+          Account status
+        </h3>
+
+        <div class="agent-status-box">
+          <div>
+            <p class="agent-status-title" id="agentStatusTitle">
+              <%= currentAgent.active === false ? "Inactive agent" : "Active agent" %>
+            </p>
+
+            <p class="agent-status-description" id="agentStatusDescription">
+              <%= currentAgent.active === false
+                ? "This agent is currently inactive."
+                : "This agent is enabled for team operations." %>
+            </p>
+          </div>
+
+          <label class="agent-switch" aria-label="Set agent active status">
+            <input
+              id="agentActive"
+              type="checkbox"
+              name="active"
+              <%= currentAgent.active === false ? "" : "checked" %>
+            >
+            <span class="agent-switch-track"></span>
+          </label>
+        </div>
+
+        <div class="agent-form-footer">
+          <p class="agent-footer-note">
+            <span class="agent-required">*</span> Required fields<br>
+            Your changes are saved when you submit this form.
+          </p>
+
+          <div class="agent-actions">
+            <a class="agent-btn agent-btn-secondary" href="/agents">
+              Cancel
+            </a>
+
+            <button class="agent-btn agent-btn-primary" id="submitAgent" type="submit">
+              <span aria-hidden="true"><%= editing ? "✓" : "+" %></span>
+              <span id="submitText"><%= editing ? "Save changes" : "Create agent" %></span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </section>
+
+    <aside class="agent-sidebar">
+
+      <section class="agent-card agent-profile-card">
+        <div class="agent-avatar" id="agentAvatar" aria-hidden="true">
+          <%= currentAgent.name
+            ? currentAgent.name.trim().charAt(0).toUpperCase()
+            : "G" %>
+        </div>
+
+        <h3 id="previewName"><%= currentAgent.name || "New team member" %></h3>
+
+        <p id="previewEmail"><%= currentAgent.email || "Email address will appear here" %></p>
+
+        <span
+          class="agent-status-badge <%= currentAgent.active === false ? 'inactive' : '' %>"
+          id="previewStatus"
+        >
+          <span aria-hidden="true">●</span>
+          <span id="previewStatusText"><%= currentAgent.active === false ? "Inactive" : "Active" %></span>
+        </span>
+      </section>
+
+      <section class="agent-card agent-info-card">
+        <h3>Helpful guidelines</h3>
+
+        <div class="agent-tip">
+          <span class="agent-tip-icon" aria-hidden="true">✉</span>
+          <div>
+            <strong>Unique email</strong>
+            <p>Each agent should have a unique email address to avoid duplicate records.</p>
+          </div>
+        </div>
+
+        <div class="agent-tip">
+          <span class="agent-tip-icon" aria-hidden="true">♧</span>
+          <div>
+            <strong>Team consistency</strong>
+            <p>Use consistent team names so reports and leaderboard filters stay organized.</p>
+          </div>
+        </div>
+
+        <div class="agent-tip">
+          <span class="agent-tip-icon" aria-hidden="true">◉</span>
+          <div>
+            <strong>Activity history</strong>
+            <p>Archiving an agent should preserve historical activity records.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="agent-security-note">
+        <strong>🔒 Secure form</strong><br>
+        This form includes a CSRF token. Keep the application's session and security middleware enabled.
+      </div>
+
+    </aside>
+
+  </div>
 </main>
+
+<script>
+(function () {
+  "use strict";
+
+  const form = document.getElementById("agentForm");
+  if (!form) return;
+
+  const nameInput = document.getElementById("agentName");
+  const emailInput = document.getElementById("agentEmail");
+  const activeInput = document.getElementById("agentActive");
+
+  const avatar = document.getElementById("agentAvatar");
+  const previewName = document.getElementById("previewName");
+  const previewEmail = document.getElementById("previewEmail");
+  const previewStatus = document.getElementById("previewStatus");
+  const previewStatusText = document.getElementById("previewStatusText");
+
+  const statusTitle = document.getElementById("agentStatusTitle");
+  const statusDescription = document.getElementById("agentStatusDescription");
+
+  const submitButton = document.getElementById("submitAgent");
+  const submitText = document.getElementById("submitText");
+
+  function updatePreview() {
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const active = activeInput.checked;
+
+    avatar.textContent = name ? name.charAt(0).toUpperCase() : "G";
+    previewName.textContent = name || "New team member";
+    previewEmail.textContent = email || "Email address will appear here";
+
+    previewStatus.classList.toggle("inactive", !active);
+    previewStatusText.textContent = active ? "Active" : "Inactive";
+
+    statusTitle.textContent = active ? "Active agent" : "Inactive agent";
+    statusDescription.textContent = active
+      ? "This agent is enabled for team operations."
+      : "This agent is currently inactive.";
+  }
+
+  nameInput.addEventListener("input", updatePreview);
+  emailInput.addEventListener("input", updatePreview);
+  activeInput.addEventListener("change", updatePreview);
+
+  form.addEventListener("submit", function (event) {
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      form.reportValidity();
+      return;
+    }
+
+    // Avoid accidental repeated submissions.
+    if (submitButton.disabled) {
+      event.preventDefault();
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitText.textContent = "<%= editing ? 'Saving changes...' : 'Creating agent...' %>";
+  });
+
+  updatePreview();
+})();
+</script>
+
 </body>
 </html>

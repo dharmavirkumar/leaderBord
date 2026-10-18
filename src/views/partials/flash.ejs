@@ -1,3 +1,241 @@
-<% if (flash) { %>
-  <div class="alert alert-<%= flash.type %>" role="status"><%= flash.message %></div>
-<% } %>
+
+<%
+  const safeArray = function (value) {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string" && value.trim()) return [value];
+    return [];
+  };
+
+  const flashData =
+    typeof flash !== "undefined" && flash && typeof flash === "object"
+      ? flash
+      : {};
+
+  const successMessages = safeArray(
+    typeof success !== "undefined" ? success : []
+  );
+
+  const errorMessages = safeArray(
+    typeof error !== "undefined" ? error : []
+  );
+
+  const infoMessages = safeArray(
+    typeof info !== "undefined" ? info : []
+  );
+
+  const warningMessages = safeArray(
+    typeof warning !== "undefined" ? warning : []
+  );
+
+  const flashType = ["success", "error", "info", "warning"].includes(
+    flashData.type
+  ) ? flashData.type : "";
+
+  const flashMessage =
+    typeof flashData.message === "string"
+      ? flashData.message.trim()
+      : "";
+
+  if (flashType && flashMessage) {
+    if (flashType === "success") successMessages.push(flashMessage);
+    if (flashType === "error") errorMessages.push(flashMessage);
+    if (flashType === "info") infoMessages.push(flashMessage);
+    if (flashType === "warning") warningMessages.push(flashMessage);
+  }
+%>
+
+<style>
+  .flash-stack {
+    width: min(100% - 32px, 1400px);
+    margin: 16px auto;
+    display: grid;
+    gap: 10px;
+  }
+
+  .flash-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(20, 30, 60, .035);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    animation: flash-enter .2s ease-out;
+  }
+
+  .flash-message[hidden] {
+    display: none;
+  }
+
+  .flash-icon {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    border-radius: 50%;
+    font-weight: 900;
+  }
+
+  .flash-content {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  .flash-title {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .flash-close {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    margin: -4px -6px 0 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: .7;
+  }
+
+  .flash-close:hover {
+    background: rgba(0, 0, 0, .05);
+    opacity: 1;
+  }
+
+  .flash-success {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  .flash-success .flash-icon {
+    background: #dcfce7;
+  }
+
+  .flash-error {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  .flash-error .flash-icon {
+    background: #fee2e2;
+  }
+
+  .flash-info {
+    color: #1e40af;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
+  .flash-info .flash-icon {
+    background: #dbeafe;
+  }
+
+  .flash-warning {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  .flash-warning .flash-icon {
+    background: #fef3c7;
+  }
+
+  @keyframes flash-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .flash-stack {
+      width: calc(100% - 20px);
+      margin: 12px auto;
+    }
+
+    .flash-message {
+      padding: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flash-message {
+      animation: none;
+    }
+  }
+</style>
+
+<%
+  const flashGroups = [
+    {
+      type: "success",
+      title: "Success",
+      icon: "✓",
+      messages: successMessages,
+      role: "status"
+    },
+    {
+      type: "error",
+      title: "Something went wrong",
+      icon: "!",
+      messages: errorMessages,
+      role: "alert"
+    },
+    {
+      type: "info",
+      title: "Information",
+      icon: "i",
+      messages: infoMessages,
+      role: "status"
+    },
+    {
+      type: "warning",
+      title: "Attention",
+      icon: "!",
+      messages: warningMessages,
+      role: "status"
+    }
+  ];
+%>
+
+<div class="flash-stack" aria-label="Notifications" aria-live="polite">
+  <% flashGroups.forEach(function(group) { %>
+    <% group.messages.forEach(function(message) { %>
+      <% if (message !== null && message !== undefined && String(message).trim()) { %>
+        <div class="flash-message flash-<%= group.type %>" role="<%= group.role %>">
+          <span class="flash-icon" aria-hidden="true"><%= group.icon %></span>
+
+          <div class="flash-content">
+            <span class="flash-title"><%= group.title %></span>
+            <%= String(message) %>
+          </div>
+
+          <button
+            class="flash-close"
+            type="button"
+            aria-label="Dismiss notification"
+            onclick="this.closest('.flash-message').hidden = true"
+          >×</button>
+        </div>
+      <% } %>
+    <% }); %>
+  <% }); %>
+</div>

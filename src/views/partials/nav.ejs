@@ -1,72 +1,321 @@
+
 <style>
   .site-nav-wrap {
     width: 100%;
-    padding: 12px 18px 0;
+    padding: 14px 20px 0;
   }
+
   .site-nav {
     width: min(1440px, 100%);
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
-    padding: 13px 17px;
-    border: 1px solid #e6eaf2;
-    border-radius: 15px;
-    background: rgba(255,255,255,.94);
-    box-shadow: 0 5px 20px rgba(25,35,65,.035);
+    gap: 20px;
+    padding: 14px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 8px 30px rgba(25, 35, 65, 0.05);
   }
+
   .site-brand {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     color: #182033;
     text-decoration: none;
     font-weight: 850;
-    letter-spacing: -.3px;
+    letter-spacing: -0.4px;
     white-space: nowrap;
   }
+
   .site-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6d5dfc, #4338ca);
+    color: #fff;
+    font-size: 19px;
+    font-weight: 900;
+    box-shadow: 0 5px 12px rgba(91, 75, 219, 0.2);
+  }
+
+  .site-brand-name {
+    font-size: 15px;
+  }
+
+  .site-brand-subtitle {
+    display: block;
+    margin-top: 3px;
+    color: #8790a3;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  .site-nav-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .site-nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .site-nav-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #667085;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  .site-nav-links a:hover,
+  .site-nav-links a[aria-current="page"] {
+    color: #5142c4;
+    background: #f0edff;
+  }
+
+  .site-nav-account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 14px;
+    border-left: 1px solid #e7eaf0;
+  }
+
+  .site-admin-avatar {
     display: grid;
     place-items: center;
     width: 34px;
     height: 34px;
-    border-radius: 11px;
-    background: #5b4bdb;
-    color: #fff;
-    font-size: 16px;
-  }
-  .site-nav-links { display: flex; flex-wrap: wrap; gap: 6px; }
-  .site-nav-links a {
-    padding: 9px 12px;
-    border-radius: 9px;
-    color: #687287;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 750;
-  }
-  .site-nav-links a:hover, .site-nav-links a[aria-current="page"] {
+    border-radius: 50%;
+    background: #ede9fe;
     color: #5142c4;
-    background: #f0edff;
+    font-size: 13px;
+    font-weight: 850;
   }
-  @media (max-width: 600px) {
-    .site-nav-wrap { padding: 10px 10px 0; }
-    .site-nav { align-items: flex-start; flex-direction: column; gap: 10px; }
-    .site-nav-links { width: 100%; }
-    .site-nav-links a { padding: 8px 9px; }
+
+  .site-admin-info {
+    min-width: 0;
+  }
+
+  .site-admin-name {
+    max-width: 150px;
+    overflow: hidden;
+    color: #263047;
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .site-admin-label {
+    margin-top: 3px;
+    color: #8a93a5;
+    font-size: 10px;
+  }
+
+  .site-logout-form {
+    margin: 0;
+  }
+
+  .site-logout-btn {
+    padding: 9px 12px;
+    border: 1px solid #fee2e2;
+    border-radius: 9px;
+    background: #fff;
+    color: #b42318;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .site-logout-btn:hover {
+    background: #fef2f2;
+  }
+
+  .site-menu-toggle {
+    display: none;
+    padding: 9px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    background: #fff;
+    color: #344054;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  @media (max-width: 1050px) {
+    .site-nav {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .site-nav-right {
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .site-nav-wrap {
+      padding: 10px 10px 0;
+    }
+
+    .site-nav {
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .site-nav-top {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .site-menu-toggle {
+      display: inline-flex;
+    }
+
+    .site-nav-right {
+      display: none;
+      align-items: stretch;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .site-nav-right.is-open {
+      display: flex;
+    }
+
+    .site-nav-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .site-nav-links a {
+      justify-content: flex-start;
+      padding: 11px;
+    }
+
+    .site-nav-account {
+      padding: 12px 0 0;
+      border-top: 1px solid #e7eaf0;
+      border-left: 0;
+      flex-wrap: wrap;
+    }
+
+    .site-admin-name {
+      max-width: 180px;
+    }
   }
 </style>
+
 <nav class="site-nav-wrap" aria-label="Main navigation">
   <div class="site-nav">
-    <a class="site-brand" href="/" aria-label="Gyansify dashboard home">
-      <span class="site-brand-mark">G</span>
-      <span>Gyansify <span style="color:#5b4bdb">Leaderboard</span></span>
-    </a>
-    <div class="site-nav-links">
-      <a href="/" aria-current="page">Dashboard</a>
-      <a href="/agents">Agents</a>
-      <a href="/activities">Activities</a>
-      <a href="/activities/new">Record activity</a>
+
+    <div class="site-nav-top">
+      <a class="site-brand" href="/" aria-label="Gyansify Leaderboard home">
+        <span class="site-brand-mark">G</span>
+        <span class="site-brand-name">
+          Gyansify
+          <span style="color:#5b4bdb">Leaderboard</span>
+          <span class="site-brand-subtitle">Performance Management</span>
+        </span>
+      </a>
+
+      <button
+        class="site-menu-toggle"
+        type="button"
+        id="siteMenuToggle"
+        aria-expanded="false"
+        aria-controls="siteNavRight"
+      >
+        ☰ Menu
+      </button>
     </div>
+
+    <div class="site-nav-right" id="siteNavRight">
+      <div class="site-nav-links">
+        <a href="/" <%= currentPath === "/" ? 'aria-current="page"' : "" %>>
+          Dashboard
+        </a>
+
+        <a href="/agents" <%= currentPath.startsWith("/agents") ? 'aria-current="page"' : "" %>>
+          Agents
+        </a>
+
+        <a href="/activities" <%= currentPath === "/activities" ? 'aria-current="page"' : "" %>>
+          Activities
+        </a>
+
+        <a href="/activities/new" <%= currentPath === "/activities/new" ? 'aria-current="page"' : "" %>>
+          Record Activity
+        </a>
+      </div>
+
+      <% if (typeof adminName !== "undefined" && adminName) { %>
+        <div class="site-nav-account">
+          <span class="site-admin-avatar">
+            <%= String(adminName).trim().charAt(0).toUpperCase() || "A" %>
+          </span>
+
+          <div class="site-admin-info">
+            <div class="site-admin-name">
+              <%= adminName %>
+            </div>
+            <div class="site-admin-label">Administrator</div>
+          </div>
+
+          <form class="site-logout-form" action="/logout" method="POST">
+            <input
+              type="hidden"
+              name="_csrf"
+              value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>"
+            >
+            <button class="site-logout-btn" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+
   </div>
 </nav>
+
+<script>
+  (() => {
+    const toggle = document.getElementById("siteMenuToggle");
+    const nav = document.getElementById("siteNavRight");
+
+    if (!toggle || !nav) return;
+
+    toggle.addEventListener("click", () => {
+      const isOpen = nav.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      toggle.textContent = isOpen ? "✕ Close" : "☰ Menu";
+    });
+  })();
+</script>
